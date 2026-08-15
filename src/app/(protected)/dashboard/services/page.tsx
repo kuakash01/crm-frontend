@@ -1,48 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 
 import { usePermission } from "@/shared/hooks/usePermissions";
+import { usePagination } from "@/shared/hooks/usePagination";
+
+import DataTablePagination from "@/shared/components/pagination/DataTablePagination";
 
 import { getServices } from "@/features/services/services.service";
 import { Service } from "@/features/services/service.types";
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
+
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
   const { can } = usePermission();
 
+  const {
+    currentPage,
+    handlePageChange,
+    handleJump,
+    visiblePages,
+  } = usePagination({
+    totalPages: pagination.totalPages,
+  });
+
+  // Debounced search
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const data = await getServices(true);
-        setServices(data);
-      } catch {
-        toast.error("Failed to load services");
-      } finally {
-        setLoading(false);
-      }
-    };
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
 
+      // Reset to first page
+      handlePageChange(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Fetch services
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+
+      const data = await getServices({
+        search: debouncedSearch || undefined,
+        page: currentPage,
+        limit: pagination.limit,
+        includeInactive: true,
+      });
+
+      setServices(data.services);
+      setPagination(data.pagination);
+    } catch {
+      toast.error("Failed to load services");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchServices();
-  }, []);
-
-  const filteredServices = useMemo(() => {
-    return services.filter((service) =>
-      service.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [services, search]);
-
-  const activeCount = services.filter((s) => s.is_active).length;
-  const inactiveCount = services.length - activeCount;
+  }, [debouncedSearch, currentPage]);
 
   return (
     <div className="space-y-6">
@@ -50,7 +94,9 @@ export default function ServicesPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Services</h1>
+          <h1 className="text-3xl font-bold">
+            Services
+          </h1>
 
           <p className="text-muted-foreground">
             Manage organization services
@@ -59,146 +105,155 @@ export default function ServicesPage() {
 
         {can("services:create") && (
           <Link href="/dashboard/services/create">
-            <Button>Create Service</Button>
+            <Button>
+              Create Service
+            </Button>
           </Link>
         )}
       </div>
 
-      {/* Summary */}
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Total Services</p>
-
-            <p className="mt-2 text-3xl font-bold">
-              {services.length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Active</p>
-
-            <p className="mt-2 text-3xl font-bold text-green-600">
-              {activeCount}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Inactive</p>
-
-            <p className="mt-2 text-3xl font-bold text-red-600">
-              {inactiveCount}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Search */}
 
-      <Input
-        placeholder="Search services..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+
+          <Input
+            placeholder="Search services..."
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+            
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          onClick={fetchServices}
+        >
+          Refresh
+        </Button>
+      </div>
 
       {/* Content */}
 
       {loading ? (
         <div className="flex justify-center py-12">
-          Loading services...
+          <span className="text-sm text-muted-foreground">
+            Loading services...
+          </span>
         </div>
-      ) : filteredServices.length === 0 ? (
+      ) : services.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <h3 className="font-medium">
-            No services found
+            {pagination.total === 0
+              ? "No services yet"
+              : "No matching services"}
           </h3>
 
           <p className="text-sm text-muted-foreground">
-            Create your first service to get started.
+            {pagination.total === 0
+              ? "Create your first service to get started."
+              : "Try adjusting your search."}
           </p>
 
-          {can("services:create") && (
-            <Link href="/dashboard/services/create">
-              <Button>Create Service</Button>
-            </Link>
-          )}
+          {pagination.total === 0 &&
+            can("services:create") && (
+              <Link href="/dashboard/services/create">
+                <Button>
+                  Create Service
+                </Button>
+              </Link>
+            )}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/50">
-                <th className="p-4 text-left font-medium">
-                  Name
-                </th>
+        <>
+          {/* Table */}
 
-                <th className="p-4 text-left font-medium">
-                  Base Price
-                </th>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>
+                    Name
+                  </TableHead>
 
-                <th className="p-4 text-left font-medium">
-                  Status
-                </th>
+                  <TableHead>
+                    Base Price
+                  </TableHead>
 
-                <th className="p-4 text-right font-medium">
-                  Actions
-                </th>
-              </tr>
-            </thead>
+                  <TableHead>
+                    Status
+                  </TableHead>
 
-            <tbody>
-              {filteredServices.map((service) => (
-                <tr
-                  key={service.id}
-                  className="border-b transition-colors hover:bg-muted/30"
-                >
-                  <td className="p-4 font-medium">
-                    {service.name}
-                  </td>
+                  <TableHead className="text-right">
+                    Actions
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-                  <td className="p-4">
-                    ₹
-                    {Number(
-                      service.base_price
-                    ).toLocaleString()}
-                  </td>
+              <TableBody>
+                {services.map((service) => (
+                  <TableRow
+                    key={service.id}
+                    className="transition-colors hover:bg-muted/30"
+                  >
+                    <TableCell className="font-medium">
+                      {service.name}
+                    </TableCell>
 
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                        service.is_active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {service.is_active
-                        ? "Active"
-                        : "Inactive"}
-                    </span>
-                  </td>
+                    <TableCell>
+                      ₹
+                      {Number(
+                        service.base_price
+                      ).toLocaleString()}
+                    </TableCell>
 
-                  <td className="p-4 text-right">
-                    <Link
-                      href={`/dashboard/services/${service.id}`}
-                    >
-                      <Button
-                        size="sm"
-                        variant="outline"
+                    <TableCell>
+                      <Badge
+                        variant={
+                          service.is_active
+                            ? "default"
+                            : "destructive"
+                        }
                       >
-                        View
-                      </Button>
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        {service.is_active
+                          ? "Active"
+                          : "Inactive"}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <Link
+                        href={`/dashboard/services/${service.id}`}
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                        >
+                          View
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+
+          <DataTablePagination
+            total={pagination.total}
+            limit={pagination.limit}
+            totalPages={pagination.totalPages}
+            currentPage={currentPage}
+            visiblePages={visiblePages}
+            itemName="services"
+            onPageChange={handlePageChange}
+            onJump={handleJump}
+          />
+        </>
       )}
     </div>
   );

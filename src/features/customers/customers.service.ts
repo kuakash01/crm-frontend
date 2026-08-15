@@ -1,5 +1,6 @@
 import axios from "@/shared/lib/axios";
-import {Deal} from "@/features/deals/deals.types";
+import { Deal } from "@/features/deals/deals.types";
+import {CustomerOptionsResponse, CustomerCreatedFrom} from "@/features/customers/customer.types"
 
 type AssignCustomersPayload = {
   customerIds: number[];
@@ -10,11 +11,12 @@ type AssignCustomersPayload = {
 export const createCustomer = async (data: {
   fname: string;
   lname?: string;
-  email: string;
+  email?: string;
   phone1: string;
   phone2?: string;
   company?: string;
   assigned_to?: number;
+  created_from?: CustomerCreatedFrom;
   lead_id?: number;
 }) => {
 
@@ -27,10 +29,18 @@ export const createCustomer = async (data: {
 
 };
 
-export const getCustomers = async () => {
+export const getCustomers = async (
+  params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+  }
+) => {
 
   const response = await axios.get(
-    "/customers"
+    "/customers",
+    { params }
   );
 
   return response.data.data;
@@ -99,8 +109,7 @@ export const deleteCustomer = async (
 
 };
 
-export const assignCustomers =
-  async (
+export const assignCustomers =  async (
     payload: AssignCustomersPayload
   ) => {
     const response =
@@ -113,7 +122,7 @@ export const assignCustomers =
   };
 
 
-  export const getCustomerDeals = async (
+export const getCustomerDeals = async (
   customerId: number
 ): Promise<Deal[]> => {
 
@@ -123,4 +132,25 @@ export const assignCustomers =
 
   return response.data.data;
 
+};
+
+
+export const getCustomerOptions = async (params?: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<CustomerOptionsResponse> => {
+
+  const response = await axios.get(
+    "/customers/options",
+    {
+      params: {
+        q: params?.search,
+        page: params?.page,
+        limit: params?.limit,
+      },
+    }
+  );
+
+  return response.data.data;
 };

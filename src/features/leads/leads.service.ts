@@ -1,25 +1,19 @@
 import axios from "@/shared/lib/axios";
-
-type AssignLeadsPayload = {
-  leadIds: number[];
-  assignedTo: number;
-};
-
-type GetLeadsParams = {
-  status?: string;
-  search?: string;
-};
+import { AssignLeadsPayload, LeadListResponse } from "./leads.types";
 
 
-export const getLeads = async ({
-  status = "ALL",
-  search = "",
-}: GetLeadsParams = {}) => {
+
+export const getLeads = async (
+  params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+  }
+): Promise<LeadListResponse> => {
+
   const response = await axios.get("/leads", {
-    params: {
-      status,
-      search,
-    },
+    params,
   });
 
   return response.data.data;
@@ -88,5 +82,25 @@ export const updateLeadStatus = async (
 };
 
 
+export const getLeadOptions = async ({
+  search = "",
+  page = 1,
+  limit = 10,
+}: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const response = await axios.get(
+    "/leads/options",
+    {
+      params: {
+        search,
+        page,
+        limit,
+      },
+    }
+  );
 
-
+  return response.data.data;
+};

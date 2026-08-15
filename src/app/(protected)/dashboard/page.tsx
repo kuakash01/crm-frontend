@@ -1,63 +1,77 @@
-// src/app/dashboard/page.tsx
+  "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import type { Metadata } from "next";
+  import { useEffect, useState } from "react";
 
-export const metadata: Metadata = {
-  title: "Dashboard | CRM Platform",
-  description: "CRM Dashboard",
-};
+  import { toast } from "sonner";
 
-export default function DashboardPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold">Welcome Back 👋</h2>
+  import { getDashboardStats } from "@/features/dashboard/dashboard.service";
 
-        <p className="text-muted-foreground">Here's an overview of your CRM.</p>
+  import { DashboardResponse } from "@/features/dashboard/dashboard.types";
+
+  // components
+  import StatsCards from "@/features/dashboard/components/StatsCards";
+  import PipelineSummary from "@/features/dashboard/components/PipelineSummary";
+  import TodayTasks from "@/features/dashboard/components/TodayTasks";
+  import RecentActivities from "@/features/dashboard/components/RecentActivities";
+  import RevenueChart from "@/features/dashboard/components/RevenueChart";
+
+  export default function DashboardPage() {
+    const [loading, setLoading] = useState(true);
+
+    const [stats, setStats] = useState<DashboardResponse | null>(null);
+
+    useEffect(() => {
+      fetchDashboard();
+    }, []);
+
+    const fetchDashboard = async () => {
+      try {
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch {
+        toast.error("Failed to load dashboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (loading) {
+      return (
+        <div className="flex h-[300px] items-center justify-center">
+          Loading dashboard...
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+
+          <p className="text-muted-foreground">Welcome back!</p>
+        </div>
+
+        <StatsCards
+          stats={
+            stats?.stats ?? {
+              totalLeads: 0,
+              totalCustomers: 0,
+              totalDeals: 0,
+              totalRevenue: 0,
+            }
+          }
+        />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {stats?.pipeline && <PipelineSummary pipeline={stats.pipeline} />}
+          <RevenueChart data={stats?.revenueChart ?? []} />
+        </div>
+        {stats?.recentActivities && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <TodayTasks tasks={stats.todayTasks} />
+
+            <RecentActivities activities={stats.recentActivities} />
+          </div>
+        )}
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Total Leads</p>
-
-            <h3 className="text-3xl font-bold">0</h3>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Customers</p>
-
-            <h3 className="text-3xl font-bold">0</h3>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Open Tasks</p>
-
-            <h3 className="text-3xl font-bold">0</h3>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">Team Members</p>
-
-            <h3 className="text-3xl font-bold">0</h3>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-2">Recent Activity</h3>
-
-          <p className="text-muted-foreground">No activity available yet.</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+    );
+  }

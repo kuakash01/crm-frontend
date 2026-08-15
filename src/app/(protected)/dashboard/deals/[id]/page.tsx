@@ -3,20 +3,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
+  ArrowLeft,
+  Pencil,
+  Building2,
+  Wrench,
+  CalendarClock,
+  CalendarPlus,
+  Trash2,
+  IndianRupee,
+} from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -27,9 +23,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { usePermission } from "@/shared/hooks/usePermissions";
 
-import { ChevronsUpDown, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-
 import {
   deleteDeal,
   getDealById,
@@ -37,10 +30,8 @@ import {
   updateDealStage,
   assignDeals,
 } from "@/features/deals/deals.service";
-import { getAssignableUsers } from "@/shared/services/user.service";
 
 import { Deal } from "@/features/deals/deals.types";
-import { User, AssignableUser } from "@/features/users/users.types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -70,6 +61,57 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import AssignmentCard from "@/shared/components/user-assignment/AssigmentCard";
+
+// Stage visual language — each stage gets a consistent dot + badge color
+// so the pipeline status reads at a glance across the whole app.
+const STAGE_META: Record<
+  string,
+  { label: string; dot: string; badge: string }
+> = {
+  OPEN: {
+    label: "Open",
+    dot: "bg-blue-500",
+    badge: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  QUOTATION_SENT: {
+    label: "Quotation Sent",
+    dot: "bg-amber-500",
+    badge: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  NEGOTIATION: {
+    label: "Negotiation",
+    dot: "bg-violet-500",
+    badge: "bg-violet-50 text-violet-700 border-violet-200",
+  },
+  WON: {
+    label: "Won",
+    dot: "bg-emerald-500",
+    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  LOST: {
+    label: "Lost",
+    dot: "bg-rose-500",
+    badge: "bg-rose-50 text-rose-700 border-rose-200",
+  },
+};
+
+function StageBadge({ stage }: { stage: string }) {
+  const meta = STAGE_META[stage] ?? {
+    label: stage,
+    dot: "bg-gray-400",
+    badge: "bg-gray-50 text-gray-700 border-gray-200",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${meta.badge}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+      {meta.label}
+    </span>
+  );
+}
 
 export default function DealDetailsPage() {
   const { id } = useParams();
@@ -92,30 +134,10 @@ export default function DealDetailsPage() {
   const expectedClose = watch("expected_close_date");
 
   const [updatingStage, setUpdatingStage] = useState(false);
-
-  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
-
-  const [assignOpen, setAssignOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-
-  const groupedUsers = assignableUsers.reduce(
-    (acc, user) => {
-      if (!acc[user.role]) {
-        acc[user.role] = [];
-      }
-
-      acc[user.role].push(user);
-
-      return acc;
-    },
-    {} as Record<string, AssignableUser[]>,
-  );
 
   useEffect(() => {
     fetchDeal();
-    if (can("deals:assign")) {
-      loadAssignableUsers();
-    }
   }, []);
 
   const fetchDeal = async () => {
@@ -130,23 +152,12 @@ export default function DealDetailsPage() {
         price: data.price,
         expected_close_date: data.expected_close_date?.split("T")[0] ?? "",
         assigned_to: data.assigned_to,
-        notes: data.notes ?? "",
         stage: data.stage,
       });
     } catch {
       toast.error("Failed to load deal");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadAssignableUsers = async () => {
-    try {
-      const data = await getAssignableUsers();
-
-      setAssignableUsers(data);
-    } catch {
-      toast.error("Failed to load users");
     }
   };
 
@@ -165,7 +176,6 @@ export default function DealDetailsPage() {
         price: updated.price,
         expected_close_date: updated.expected_close_date?.split("T")[0] ?? "",
         assigned_to: updated.assigned_to,
-        notes: updated.notes ?? "",
         stage: updated.stage,
       });
 
@@ -219,211 +229,162 @@ export default function DealDetailsPage() {
   };
 
   if (loading) {
-    return <div className="py-20 text-center">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-64 animate-pulse rounded-md bg-muted" />
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="h-96 animate-pulse rounded-xl bg-muted lg:col-span-2" />
+          <div className="h-96 animate-pulse rounded-xl bg-muted" />
+        </div>
+      </div>
+    );
   }
 
   if (!deal) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">{title}</h1>
-
-            <Badge>{deal.stage}</Badge>
+            <StageBadge stage={deal.stage} />
           </div>
-
           <p className="text-muted-foreground mt-2">Manage sales opportunity</p>
-        </div>
-
-        <div className="flex gap-2">
-          {!editing ? (
-            <>
-              {can("deals:update") && (
-                <Button onClick={() => setEditing(true)}>Edit</Button>
-              )}
-
-              {can("deals:delete") && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">Delete</Button>
-                  </AlertDialogTrigger>
-
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Deal?</AlertDialogTitle>
-
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete this deal, its activities, notes and tasks.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-
-                      <AlertDialogAction
-                        className="bg-destructive hover:bg-destructive/90"
-                        disabled={deleting}
-                        onClick={async (e) => {
-                          e.preventDefault();
-
-                          try {
-                            setDeleting(true);
-
-                            await handleDelete();
-                          } finally {
-                            setDeleting(false);
-                          }
-                        }}
-                      >
-                        {deleting ? "Deleting..." : "Delete Deal"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </>
-          ) : (
-            <>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  reset({
-                    title: deal.title,
-                    customer_id: deal.customer_id,
-                    service_id: deal.service_id,
-                    price: deal.price,
-                    expected_close_date:
-                      deal.expected_close_date?.split("T")[0] ?? "",
-                    assigned_to: deal.assigned_to,
-                    notes: deal.notes ?? "",
-                    stage: deal.stage,
-                  });
-
-                  setEditing(false);
-                }}
-              >
-                Cancel
-              </Button>
-
-              <Button type="submit" form="deal-form" disabled={!isDirty}>
-                Save Changes
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
       {/* Tabs */}
-
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-
           <TabsTrigger value="activities">Activities</TabsTrigger>
-
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
-
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
 
         {/* Overview */}
-
-        <TabsContent value="overview">
+        <TabsContent value="overview" className="mt-6">
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left */}
-
             <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Deal Information</CardTitle>
+              <Card className="border-border/60 shadow-sm">
+                <CardHeader className="border-b border-border/60 pb-5 flex justify-between">
+                  <div>
+                    <CardTitle className="text-base">
+                      Deal information
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      View and update the core details of this deal.
+                    </p>
+                  </div>
+                  {!editing && can("deals:update") && (
+                    <Button onClick={() => setEditing(true)} className="gap-2">
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit deal
+                    </Button>
+                  )}
                 </CardHeader>
 
-                <CardContent className="space-y-6">
-                  <form onSubmit={handleSubmit(onSubmit)}>
+                <CardContent className="pt-6">
+                  <form
+                    id="deal-form"
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
                     {/* Title */}
-
-                    <div className="space-y-2">
-                      <Label>Title</Label>
-
-                      <Input disabled={!editing} {...register("title")} />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        className="h-10"
+                        readOnly={!editing}
+                        {...register("title")}
+                      />
                       {errors.title && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-destructive">
                           {errors.title.message}
                         </p>
                       )}
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                      {/* Customer */}
-
-                      <div className="space-y-2">
-                        <Label>Customer</Label>
-
-                        <Input value={deal.customer_name} disabled />
+                    {/* Customer / Service */}
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5 text-muted-foreground">
+                          <Building2 className="h-3.5 w-3.5" />
+                          Customer
+                        </Label>
+                        <Input
+                          className="h-10 bg-muted/40"
+                          value={deal.customer_name}
+                          readOnly
+                        />
                       </div>
 
-                      {/* Service */}
-
-                      <div className="space-y-2">
-                        <Label>Service</Label>
-
-                        <Input value={deal.service_name} disabled />
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5 text-muted-foreground">
+                          <Wrench className="h-3.5 w-3.5" />
+                          Service
+                        </Label>
+                        <Input
+                          className="h-10 bg-muted/40"
+                          value={deal.service_name}
+                          readOnly
+                        />
                       </div>
                     </div>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                      {/* Price */}
-
-                      <div className="space-y-2">
+                    {/* Price / Expected Close */}
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      <div className="space-y-1.5">
                         <Label>Deal Value</Label>
 
-                        <Input
-                          type="number"
-                          disabled={!editing}
-                          {...register("price", {
-                            valueAsNumber: true,
-                          })}
-                        />
+                        <div className="flex">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-l-md border border-r-0 bg-muted text-sm font-medium text-muted-foreground">
+                            ₹
+                          </div>
+
+                          <Input
+                            type="number"
+                            className="h-10 rounded-l-none"
+                            readOnly={!editing}
+                            {...register("price", {
+                              valueAsNumber: true,
+                            })}
+                          />
+                        </div>
+
                         {errors.price && (
-                          <p className="text-sm text-red-500">
+                          <p className="text-sm text-destructive">
                             {errors.price.message}
                           </p>
                         )}
                       </div>
 
-                      {/* Expected Close */}
-
-                      <div className="space-y-2">
-                        <Label>Expected Close</Label>
-
+                      <div className="space-y-1.5">
+                        <Label>Expected close</Label>
                         <Input
+                             className="h-10"
                           type="date"
-                          disabled={!editing}
+                          readOnly={!editing}
                           {...register("expected_close_date")}
                         />
+                        {errors.expected_close_date && (
+                          <p className="text-sm text-destructive">
+                            {errors.expected_close_date.message}
+                          </p>
+                        )}
                       </div>
-                      {errors.expected_close_date && (
-                        <p className="text-sm text-red-500">
-                          {errors.expected_close_date.message}
-                        </p>
-                      )}
                     </div>
 
-                    {/* Notes */}
-
-                    <div className="space-y-2">
-                      <Label>Notes</Label>
-
-                      <Textarea disabled={!editing} {...register("notes")} />
-                    </div>
+                  
 
                     {editing && (
-                      <div className="flex justify-end gap-3 p-2">
+                      <div className="flex items-center justify-end gap-3 border-t border-border/60 pt-6">
                         <Button
+                          type="button"
                           variant="outline"
                           onClick={() => {
                             reset({
@@ -434,7 +395,6 @@ export default function DealDetailsPage() {
                               expected_close_date:
                                 deal.expected_close_date?.split("T")[0] ?? "",
                               assigned_to: deal.assigned_to,
-                              notes: deal.notes ?? "",
                               stage: deal.stage,
                             });
 
@@ -445,7 +405,7 @@ export default function DealDetailsPage() {
                         </Button>
 
                         <Button type="submit" disabled={!isDirty}>
-                          Save Changes
+                          Save changes
                         </Button>
                       </div>
                     )}
@@ -455,217 +415,213 @@ export default function DealDetailsPage() {
             </div>
 
             {/* Right */}
-
             <div className="space-y-6">
               {/* Deal Summary */}
-              <Card className="sticky top-6">
+              <Card className="border-border/60 shadow-sm">
                 <CardHeader className="pb-4">
-                  <CardTitle>Deal Summary</CardTitle>
+                  <CardTitle className="text-base">Summary</CardTitle>
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                  <div className="text-center">
-                    <p className="text-4xl font-bold tracking-tight">
-                      ₹{Number(price).toLocaleString()}
+                  <div className="rounded-lg bg-muted/40 p-5 text-center">
+                    <p className="text-3xl font-semibold tracking-tight text-foreground">
+                      ₹{Number(price || 0).toLocaleString("en-IN")}
                     </p>
-
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Current Deal Value
+                    <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+                      Current deal value
                     </p>
                   </div>
 
-                  <div className="border-t pt-5">
-                    <Label className="mb-2 block text-xs uppercase tracking-wide text-muted-foreground">
-                      Deal Stage
+                  <div>
+                    <Label className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Deal stage
                     </Label>
 
                     <Select
                       value={deal.stage}
-                      disabled={updatingStage}
+                      disabled={editing || updatingStage}
                       onValueChange={handleStageChange}
                     >
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger className="h-10 w-full">
                         <SelectValue />
                       </SelectTrigger>
 
                       <SelectContent>
-                        <SelectItem value="OPEN">Open</SelectItem>
-
-                        <SelectItem value="QUOTATION_SENT">
-                          Quotation Sent
-                        </SelectItem>
-
-                        <SelectItem value="NEGOTIATION">Negotiation</SelectItem>
-
-                        <SelectItem value="WON">Won</SelectItem>
-
-                        <SelectItem value="LOST">Lost</SelectItem>
+                        {Object.entries(STAGE_META).map(([value, meta]) => (
+                          <SelectItem key={value} value={value}>
+                            <span className="flex items-center gap-2">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${meta.dot}`}
+                              />
+                              {meta.label}
+                            </span>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-4 border-t pt-5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
+                  <dl className="space-y-3 border-t border-border/60 pt-5 text-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="flex items-center gap-1.5 text-muted-foreground">
+                        <Building2 className="h-3.5 w-3.5" />
                         Customer
-                      </span>
-
-                      <span className="max-w-[170px] text-right font-medium">
+                      </dt>
+                      <dd className="max-w-[60%] truncate text-right font-medium text-foreground">
                         {deal.customer_name}
-                      </span>
+                      </dd>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="flex items-center gap-1.5 text-muted-foreground">
+                        <Wrench className="h-3.5 w-3.5" />
                         Service
-                      </span>
-
-                      <span className="max-w-[170px] text-right font-medium">
+                      </dt>
+                      <dd className="max-w-[60%] truncate text-right font-medium text-foreground">
                         {deal.service_name}
-                      </span>
+                      </dd>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
-                        Expected Close
-                      </span>
-
-                      <span className="font-medium">
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="flex items-center gap-1.5 text-muted-foreground">
+                        <CalendarClock className="h-3.5 w-3.5" />
+                        Expected close
+                      </dt>
+                      <dd className="font-medium text-foreground">
                         {expectedClose
-                          ? new Date(expectedClose).toLocaleDateString()
-                          : "-"}
-                      </span>
+                          ? new Date(expectedClose).toLocaleDateString(
+                              "en-IN",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )
+                          : "—"}
+                      </dd>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="flex items-center gap-1.5 text-muted-foreground">
+                        <CalendarPlus className="h-3.5 w-3.5" />
                         Created
-                      </span>
-
-                      <span className="font-medium">
-                        {new Date(deal.created_at).toLocaleDateString()}
-                      </span>
+                      </dt>
+                      <dd className="font-medium text-foreground">
+                        {new Date(deal.created_at).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </dd>
                     </div>
-                  </div>
+                  </dl>
                 </CardContent>
               </Card>
 
               {/* Assignment */}
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle>Deal Assignment</CardTitle>
-                </CardHeader>
+              <AssignmentCard
+                entityName="Deal"
+                assignedUser={{
+                  id: Number(deal.assigned_to),
+                  name: deal.assigned_to_name?.toString() ?? null,
+                }}
+                canAssign={!editing && (can("deals:assign") ?? false)}
+                onAssign={async (user) => {
+                  try {
+                    await assignDeals({
+                      dealIds: [deal.id],
+                      assignedTo: user.id,
+                    });
 
-                <CardContent className="space-y-5">
-                  <div className="rounded-xl border bg-muted/40 p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-11 min-w-11 items-center justify-center rounded-full bg-primary text-lg font-semibold text-primary-foreground">
-                        {deal.assigned_to_name?.charAt(0) ?? "U"}
-                      </div>
+                    setDeal((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            assigned_to: user.id,
+                            assigned_to_name: user.fullname,
+                          }
+                        : prev,
+                    );
 
-                      <div className="flex-1">
-                        <p className="font-semibold">
-                          {deal.assigned_to_name ?? "Unassigned"}
-                        </p>
+                    toast.success("Deal transferred");
+                  } catch {
+                    toast.error("Transfer failed");
+                  }
+                }}
+              />
 
-                        <p className="text-xs text-muted-foreground">
-                          Current deal owner
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {can("deals:delete") && (
+                <Card className="border-destructive/30 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm text-destructive">
+                      Danger zone
+                    </CardTitle>
+                  </CardHeader>
 
-                  {can("deals:assign") && (
-                    <Popover open={assignOpen} onOpenChange={setAssignOpen}>
-                      <PopoverTrigger asChild>
+                  <CardContent>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
                         <Button
-                          variant="outline"
-                          className="w-full justify-between"
+                          disabled={editing}
+                          variant="destructive"
+                          className="w-full gap-2"
                         >
-                          Transfer Deal
-                          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete deal
                         </Button>
-                      </PopoverTrigger>
+                      </AlertDialogTrigger>
 
-                      <PopoverContent className="w-[320px] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search user..." />
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this deal?</AlertDialogTitle>
 
-                          <CommandEmpty>No user found.</CommandEmpty>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently
+                            delete this deal, along with its activities, notes
+                            and tasks.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
 
-                          {Object.entries(groupedUsers).map(([role, users]) => (
-                            <CommandGroup key={role} heading={role}>
-                              {users.map((user) => (
-                                <CommandItem
-                                  key={user.id}
-                                  value={`${user.fullname} ${user.role}`}
-                                  onSelect={async () => {
-                                    try {
-                                      await assignDeals({
-                                        dealIds: [deal.id],
-                                        assignedTo: user.id,
-                                      });
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
 
-                                      setDeal({
-                                        ...deal,
-                                        assigned_to: user.id,
-                                        assigned_to_name: user.fullname,
-                                      });
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={async (e) => {
+                              e.preventDefault();
 
-                                      toast.success("Deal transferred");
-                                    } catch {
-                                      toast.error("Transfer failed");
-                                    }
-
-                                    setAssignOpen(false);
-                                  }}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      deal.assigned_to === user.id
-                                        ? "opacity-100"
-                                        : "opacity-0",
-                                    )}
-                                  />
-
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">
-                                      {user.fullname}
-                                    </span>
-
-                                    <span className="text-xs text-muted-foreground">
-                                      {user.role}
-                                    </span>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          ))}
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </CardContent>
-              </Card>
+                              try {
+                                setDeleting(true);
+                                await handleDelete();
+                              } finally {
+                                setDeleting(false);
+                              }
+                            }}
+                          >
+                            {deleting ? "Deleting…" : "Delete"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </TabsContent>
 
         {/* Activities */}
-
-        <TabsContent value="activities">
+        <TabsContent value="activities" className="mt-6">
           <ActivitiesTab entityType="DEAL" entityId={deal.id} />
         </TabsContent>
 
         {/* Tasks */}
-
-        <TabsContent value="tasks">
-          <TasksTab entityType="DEAL" entityId={deal.id} />
+        <TabsContent value="tasks" className="mt-6">
+          <TasksTab entityType="DEAL" entityId={deal.id}  assignedTo={deal.assigned_to ?? null}/>
         </TabsContent>
 
         {/* Notes */}
-        <TabsContent value="notes">
+        <TabsContent value="notes" className="mt-6">
           <NotesTab entityType="DEAL" entityId={deal.id} />
         </TabsContent>
       </Tabs>

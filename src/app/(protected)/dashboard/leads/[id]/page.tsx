@@ -13,6 +13,14 @@ import { Label } from "@/components/ui/label";
 
 import { Button } from "@/components/ui/button";
 
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import {
+  updateLeadSchema,
+  UpdateLeadFormData,
+} from "@/features/leads/leads.schema";
+
 import {
   Select,
   SelectContent,
@@ -41,31 +49,14 @@ import {
   assignLeads,
 } from "@/features/leads/leads.service";
 
-import { getAssignableUsers } from "@/shared/services/user.service";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-
-import { ChevronsUpDown, Check } from "lucide-react";
-
-import { cn } from "@/lib/utils";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import ActivitiesTab from "@/features/activities/component/ActivitiesTab";
 import NotesTab from "@/features/notes/component/NotesTab";
 import TasksTab from "@/features/tasks/component/TasksTab";
+
+import { useAppSelector } from "@/store/hooks";
+import AssignmentCard from "@/shared/components/user-assignment/AssigmentCard";
 
 type LeadStatus =
   | "NEW"
@@ -90,8 +81,8 @@ type Lead = {
   source: LeadSource;
   assigned_to?: number | null;
   assigned_to_name?: string | null;
+  converted_at: Date;
   customer_id: number | null;
-  customer_created: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -108,16 +99,28 @@ export default function LeadDetailsPage() {
 
   const [lead, setLead] = useState<Lead | null>(null);
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isDirty },
+  } = useForm<UpdateLeadFormData>({
+    resolver: zodResolver(updateLeadSchema),
+  });
+
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
-
-  const [assignOpen, setAssignOpen] = useState(false);
-
   const { can } = usePermission();
+  const user = useAppSelector((state) => state.auth.user);
+  const isAdmin = user?.role === "admin";
 
+  const canEditLeadDetails =
+    can("leads:update") && (!lead?.converted_at || isAdmin);
+
+  const canChangeStatus = can("leads:update") && !lead?.converted_at;
+  const canDeleteLead = can("leads:delete") && !lead?.converted_at;
 
   const statusTransitions: Record<LeadStatus, LeadStatus[]> = {
     NEW: ["NEW", "CONTACTED", "LOST"],
@@ -130,24 +133,20 @@ export default function LeadDetailsPage() {
   };
   let availableStatuses = statusTransitions[lead?.status || "NEW"];
 
-  const groupedUsers = assignableUsers.reduce(
-    (acc, user) => {
-      if (!acc[user.role]) {
-        acc[user.role] = [];
-      }
-
-      acc[user.role].push(user);
-
-      return acc;
-    },
-    {} as Record<string, AssignableUser[]>,
-  );
-
   const fetchLead = async () => {
     try {
       const data = await getLeadById(Number(id));
 
       setLead(data);
+
+      reset({
+        fname: data.fname,
+        lname: data.lname,
+        email: data.email,
+        phone1: data.phone1,
+        phone2: data.phone2 ?? "",
+        company: data.company ?? "",
+      });
     } catch {
       toast.error("Failed to load lead");
     } finally {
@@ -155,42 +154,32 @@ export default function LeadDetailsPage() {
     }
   };
 
-
-  const loadAssignableUsers = async () => {
-    try {
-      const data = await getAssignableUsers();
-
-      setAssignableUsers(data);
-    } catch {
-      toast.error("Failed to load users");
-    }
-  };
-
   useEffect(() => {
     fetchLead();
-    if (can("leads:assign")) loadAssignableUsers();
   }, [id]);
 
-  const handleSaveDetails = async () => {
+  const onSubmit = async (data: UpdateLeadFormData) => {
     if (!lead) return;
 
     try {
-      setSaving(true);
+      const updated = await updateLead(lead.id, data);
 
-      await updateLead(lead.id, {
-        fname: lead.fname,
-        lname: lead.lname,
-        email: lead.email,
-        phone1: lead.phone1,
-        phone2: lead.phone2,
-        company: lead.company,
+      setLead(updated);
+
+      reset({
+        fname: updated.fname,
+        lname: updated.lname,
+        email: updated.email,
+        phone1: updated.phone1,
+        phone2: updated.phone2 ?? "",
+        company: updated.company ?? "",
       });
 
-      toast.success("Details updated");
+      setEditing(false);
+
+      toast.success("Lead updated");
     } catch (error: any) {
-      toast.error(error.response?.data?.message ?? "Failed to update");
-    } finally {
-      setSaving(false);
+      toast.error(error.response?.data?.message ?? "Failed to update lead");
     }
   };
 
@@ -211,8 +200,6 @@ export default function LeadDetailsPage() {
       setDeleting(false);
     }
   };
-
-
 
   if (loading) {
     return <div className="p-6">Loading lead...</div>;
@@ -248,110 +235,155 @@ export default function LeadDetailsPage() {
           <TabsContent value="details">
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Lead Information</CardTitle>
+                <CardHeader className="border-b border-border/60 pb-5 flex justify-between">
+                  <div>
+                    <CardTitle className="text-base">
+                      Lead information
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      View and update the core details of this lead.
+                    </p>
+                  </div>
+                  {!editing && canEditLeadDetails && (
+                    <Button onClick={() => setEditing(true)}>Edit Lead</Button>
+                  )}
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <Label>First Name</Label>
+                  <form
+                    id="lead-form"
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="space-y-6"
+                  >
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>First Name</Label>
 
-                      <Input
-                        disabled={lead.customer_created}
-                        value={lead.fname}
-                        onChange={(e) =>
-                          setLead({
-                            ...lead,
-                            fname: e.target.value,
-                          })
-                        }
-                      />
+                        <Input
+                          readOnly={!editing}
+                          className="h-10"
+                          type="text"
+                          {...register("fname")}
+                        />
+                        {errors.fname && (
+                          <p className="text-sm text-destructive">
+                            {errors.fname.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <Label>Last Name</Label>
+
+                        <Input
+                          readOnly={!editing}
+                          className="h-10"
+                          type="text"
+                          {...register("lname")}
+                        />
+                        {errors.lname && (
+                          <p className="text-sm text-destructive">
+                            {errors.lname.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <div>
-                      <Label>Last Name</Label>
+                      <Label>Email</Label>
 
                       <Input
-                        disabled={lead.customer_created}
-                        value={lead.lname}
-                        onChange={(e) =>
-                          setLead({
-                            ...lead,
-                            lname: e.target.value,
-                          })
-                        }
+                        readOnly={!editing}
+                        className="h-10"
+                        type="email"
+                        {...register("email")}
                       />
+                      {errors.email && (
+                        <p className="text-sm text-destructive">
+                          {errors.email.message}
+                        </p>
+                      )}
                     </div>
-                  </div>
 
-                  <div>
-                    <Label>Email</Label>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Primary Phone</Label>
 
-                    <Input
-                      disabled={lead.customer_created}
-                      type="email"
-                      value={lead.email}
-                      onChange={(e) =>
-                        setLead({
-                          ...lead,
-                          email: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
+                        <Input
+                          readOnly={!editing}
+                          className="h-10"
+                          {...register("phone1")}
+                        />
+                        {errors.phone1 && (
+                          <p className="text-sm text-destructive">
+                            {errors.phone1.message}
+                          </p>
+                        )}
+                      </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Secondary Phone</Label>
+
+                        <Input
+                          readOnly={!editing}
+                          className="h-10"
+                          {...register("phone2")}
+                        />
+                        {errors.phone2 && (
+                          <p className="text-sm text-destructive">
+                            {errors.phone2.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* company */}
                     <div>
-                      <Label>Primary Phone</Label>
+                      <Label>Company</Label>
 
                       <Input
-                        disabled={lead.customer_created}
-                        value={lead.phone1}
-                        onChange={(e) =>
-                          setLead({
-                            ...lead,
-                            phone1: e.target.value,
-                          })
-                        }
+                        readOnly={!editing}
+                        className="h-10"
+                        {...register("company")}
                       />
+                      {errors.company && (
+                        <p className="text-sm text-destructive">
+                          {errors.company.message}
+                        </p>
+                      )}
                     </div>
+                    {/* {canEditLeadDetails && (
+                      <Button onClick={handleSaveDetails} disabled={saving}>
+                        Save Details
+                      </Button>
+                    )} */}
+                    {editing && (
+                      <div className="flex justify-end gap-3 border-t pt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            reset({
+                              fname: lead.fname,
+                              lname: lead.lname,
+                              email: lead.email,
+                              phone1: lead.phone1,
+                              phone2: lead.phone2 ?? "",
+                              company: lead.company ?? "",
+                            });
 
-                    <div>
-                      <Label>Secondary Phone</Label>
+                            setEditing(false);
+                          }}
+                        >
+                          Cancel
+                        </Button>
 
-                      <Input
-                        disabled={lead.customer_created}
-                        value={lead.phone2 ?? ""}
-                        onChange={(e) =>
-                          setLead({
-                            ...lead,
-                            phone2: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label>Company</Label>
-
-                    <Input
-                      disabled={lead.customer_created}
-                      value={lead.company ?? ""}
-                      onChange={(e) =>
-                        setLead({
-                          ...lead,
-                          company: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  {!lead.customer_created && can("leads:update") && (
-                    <Button onClick={handleSaveDetails} disabled={saving}>
-                      Save Details
-                    </Button>
-                  )}
+                        <Button type="submit" disabled={!isDirty}>
+                          Save Changes
+                        </Button>
+                      </div>
+                    )}
+                  </form>
                 </CardContent>
               </Card>
 
@@ -363,21 +395,31 @@ export default function LeadDetailsPage() {
 
                   <CardContent>
                     <Select
-                      disabled={lead.customer_created}
+                      disabled={editing || !canChangeStatus}
                       value={lead.status}
                       onValueChange={async (value) => {
                         try {
-                          await updateLeadStatus(lead.id, value);
+                          const updatedLead = await updateLeadStatus(
+                            lead.id,
+                            value,
+                          );
 
-                          setLead({
-                            ...lead,
-                            status: value as LeadStatus,
-                            customer_created:
-                              value === "CONVERTED" ? true : false,
-                          });
+                          setLead((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  status: updatedLead.status,
+                                  converted_at: updatedLead.converted_at,
+                                }
+                              : prev,
+                          );
+
                           toast.success("Status updated");
-                        } catch {
-                          toast.error("Failed to update status");
+                        } catch (error: any) {
+                          toast.error(
+                            error?.response?.data?.message ??
+                              "Failed to update status",
+                          );
                         }
                       }}
                     >
@@ -405,99 +447,35 @@ export default function LeadDetailsPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Lead Assignment</CardTitle>
-                  </CardHeader>
+                {/* assignment */}
+                <AssignmentCard
+                  entityName="Lead"
+                  assignedUser={{
+                    id: Number(lead.assigned_to),
+                    name: lead.assigned_to_name?.toString() ?? null,
+                  }}
+                  canAssign={
+                    !editing && !lead.converted_at && can("leads:assign")
+                  }
+                  onAssign={async (user) => {
+                    await assignLeads({
+                      leadIds: [lead.id],
+                      assignedTo: user.id,
+                    });
 
-                  <CardContent className="space-y-4">
-                    <div className="text-sm text-muted-foreground">
-                      Current Owner
-                    </div>
+                    setLead((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            assigned_to: user.id,
+                            assigned_to_name: user.fullname,
+                          }
+                        : prev,
+                    );
 
-                    <div className="font-medium">
-                      {lead.assigned_to_name ?? "Unassigned"}
-                    </div>
-
-                    {!lead.customer_created && can("leads:assign") && (
-                      <Popover open={assignOpen} onOpenChange={setAssignOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between"
-                          >
-                            {lead.assigned_to
-                              ? assignableUsers.find(
-                                  (user) => user.id === lead.assigned_to,
-                                )?.fullname
-                              : "Transfer Lead"}
-
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="w-[300px] p-0">
-                          <Command>
-                            <CommandInput placeholder="Search user..." />
-
-                            <CommandEmpty>No user found.</CommandEmpty>
-
-                            {Object.entries(groupedUsers).map(
-                              ([role, users]) => (
-                                <CommandGroup key={role} heading={role}>
-                                  {users.map((user) => (
-                                    <CommandItem
-                                      key={user.id}
-                                      value={`${user.fullname} ${user.role}`}
-                                      onSelect={async () => {
-                                        try {
-                                          await assignLeads({
-                                            leadIds: [lead.id],
-                                            assignedTo: user.id,
-                                          });
-
-                                          setLead({
-                                            ...lead,
-                                            assigned_to: user.id,
-                                            assigned_to_name: user.fullname,
-                                          });
-
-                                          toast.success("Lead transferred");
-                                        } catch {
-                                          toast.error("Transfer failed");
-                                        }
-
-                                        setAssignOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          lead.assigned_to === user.id
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-
-                                      <div className="flex flex-col">
-                                        <span>{user.fullname}</span>
-
-                                        <span className="text-xs text-muted-foreground">
-                                          {user.role}
-                                        </span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              ),
-                            )}
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </CardContent>
-                </Card>
+                    toast.success("Lead transferred");
+                  }}
+                />
 
                 <Card>
                   <CardHeader>
@@ -531,7 +509,7 @@ export default function LeadDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {!lead.customer_created && (
+                {canDeleteLead && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Danger Zone</CardTitle>
@@ -540,7 +518,11 @@ export default function LeadDetailsPage() {
                     <CardContent>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" className="w-full">
+                          <Button
+                            disabled={editing}
+                            variant="destructive"
+                            className="w-full"
+                          >
                             Delete Lead
                           </Button>
                         </AlertDialogTrigger>
@@ -581,7 +563,11 @@ export default function LeadDetailsPage() {
           </TabsContent>
 
           <TabsContent value="tasks">
-            <TasksTab entityType="LEAD" entityId={lead.id} />
+            <TasksTab
+              entityType="LEAD"
+              entityId={lead.id}
+              assignedTo={lead.assigned_to ?? null}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>

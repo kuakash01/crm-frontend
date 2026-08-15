@@ -1,16 +1,24 @@
 import axios from "@/shared/lib/axios";
+
 export const getNotes = async (
   entityType: string,
-  entityId: number
+  entityId: number,
+    options?: {
+    page?: number;
+    limit?: number;
+  }
 ) => {
-
-  const response =
-    await axios.get(
-      `/notes/${entityType}/${entityId}`
-    );
+  const response = await axios.get(
+    `/notes/${entityType}/${entityId}`,
+    {
+      params: {
+        page: options?.page,
+        limit: options?.limit,
+      },
+    }
+  );
 
   return response.data.data;
-
 };
 
 export const createNote = async (

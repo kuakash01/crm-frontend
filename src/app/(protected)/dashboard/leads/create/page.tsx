@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { createLead } from "@/features/leads/leads.service";
@@ -11,9 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 import { toast } from "sonner";
+import { usePermission } from "@/shared/hooks/usePermissions";
 
 export default function CreateLeadPage() {
   const router = useRouter();
+  const { can } = usePermission();
 
   const [loading, setLoading] = useState(false);
 
@@ -24,12 +26,10 @@ export default function CreateLeadPage() {
     phone1: "",
     phone2: "",
     company: "",
-    source:"MANUAL",
+    source: "MANUAL",
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -38,9 +38,7 @@ export default function CreateLeadPage() {
     }));
   };
 
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -52,10 +50,7 @@ export default function CreateLeadPage() {
 
       router.push("/dashboard/leads");
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to create lead"
-      );
+      toast.error(error?.response?.data?.message || "Failed to create lead");
 
       console.error(error);
     } finally {
@@ -63,13 +58,21 @@ export default function CreateLeadPage() {
     }
   };
 
+  useEffect(() => {
+    if (!can("leads:create")) {
+      router.replace("/dashboard/leads");
+    }
+  }, [can, router]);
+
+  if (!can("leads:create")) {
+    return null;
+  }
+
   return (
     <div className="container max-w-4xl py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">
-            Create Lead
-          </CardTitle>
+          <CardTitle className="text-2xl">Create Lead</CardTitle>
 
           <p className="text-sm text-muted-foreground">
             Add a new lead to your CRM pipeline.
@@ -77,15 +80,10 @@ export default function CreateLeadPage() {
         </CardHeader>
 
         <CardContent>
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="fname">
-                  First Name
-                </Label>
+                <Label htmlFor="fname">First Name</Label>
 
                 <Input
                   id="fname"
@@ -98,9 +96,7 @@ export default function CreateLeadPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="lname">
-                  Last Name
-                </Label>
+                <Label htmlFor="lname">Last Name</Label>
 
                 <Input
                   id="lname"
@@ -114,9 +110,7 @@ export default function CreateLeadPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">
-                Email Address
-              </Label>
+              <Label htmlFor="email">Email Address</Label>
 
               <Input
                 id="email"
@@ -131,9 +125,7 @@ export default function CreateLeadPage() {
 
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="phone1">
-                  Primary Phone
-                </Label>
+                <Label htmlFor="phone1">Primary Phone</Label>
 
                 <Input
                   id="phone1"
@@ -146,9 +138,7 @@ export default function CreateLeadPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone2">
-                  Secondary Phone
-                </Label>
+                <Label htmlFor="phone2">Secondary Phone</Label>
 
                 <Input
                   id="phone2"
@@ -161,9 +151,7 @@ export default function CreateLeadPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company">
-                Company
-              </Label>
+              <Label htmlFor="company">Company</Label>
 
               <Input
                 id="company"
@@ -178,20 +166,13 @@ export default function CreateLeadPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  router.push("/dashboard/leads")
-                }
+                onClick={() => router.push("/dashboard/leads")}
               >
                 Cancel
               </Button>
 
-              <Button
-                type="submit"
-                disabled={loading}
-              >
-                {loading
-                  ? "Creating Lead..."
-                  : "Create Lead"}
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creating Lead..." : "Create Lead"}
               </Button>
             </div>
           </form>

@@ -4,6 +4,7 @@ import {
   Deal,
   CreateDealDto,
   UpdateDealDto,
+  DealsResponse
 } from "./deals.types";
 
 export const createDeal = async (
@@ -22,7 +23,9 @@ export const createDeal = async (
 export const getDeals = async (params?: {
   stage?: string;
   search?: string;
-}): Promise<Deal[]> => {
+  page?: number;
+  limit?: number;
+}): Promise<DealsResponse> => {
 
   const response = await axios.get(
     "/deals",
@@ -33,6 +36,14 @@ export const getDeals = async (params?: {
 
   return response.data.data;
 
+};
+
+export const getPipelineDeals = async () => {
+  const response = await axios.get(
+    "/deals/pipeline"
+  );
+
+  return response.data.data;
 };
 
 export const getDealById = async (
@@ -111,4 +122,27 @@ export const assignDeals = async (
 
   return response.data.data;
 
+};
+
+export const getDealOptions = async ({
+  search = "",
+  page = 1,
+  limit = 10,
+}: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const response = await axios.get(
+    "/deals/options",
+    {
+      params: {
+        search,
+        page,
+        limit,
+      },
+    }
+  );
+
+  return response.data.data;
 };

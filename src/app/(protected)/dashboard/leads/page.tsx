@@ -6,60 +6,43 @@ import { toast } from "sonner";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import {
-  getLeads,
-  assignLeads,
-} from "@/features/leads/leads.service";
-import { getAssignableUsers } from "@/shared/services/user.service";
+import { getLeads, assignLeads } from "@/features/leads/leads.service";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import { ChevronsUpDown, Check } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { MoreHorizontal, Eye, UserRoundPlus } from "lucide-react";
+
+import QuickAssignment from "@/shared/components/user-assignment/QuickAssignment";
+
+// hooks
 import { usePermission } from "@/shared/hooks/usePermissions";
+import { usePagination } from "@/shared/hooks/usePagination";
 
-type Lead = {
-  id: number;
-  fname: string;
-  lname: string;
-  email: string;
-  phone1: string;
-  phone2: string;
-  company: string;
-  source: string;
-  status: string;
-  customer_created: boolean;
-  assigned_to?: number;
-};
-type AssignableUser = {
-  id: number;
-  fullname: string;
-  role: string;
-};
+import DataTablePagination from "@/shared/components/pagination/DataTablePagination";
+
+import { Lead, LeadCounts } from "@/features/leads/leads.types";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 const leadStatuses = [
   "ALL",
@@ -73,12 +56,22 @@ const leadStatuses = [
 ] as const;
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [status, setStatus] = useState("ALL");
-  const [counts, setCounts] = useState({
+  const [bulkMode, setBulkMode] = useState(false);
+
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [selectedLeads, setSelectedLeads] = useState<number[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  const status = searchParams.get("status") ?? "ALL";
+  const [counts, setCounts] = useState<LeadCounts>({
     ALL: 0,
     NEW: 0,
     CONTACTED: 0,
@@ -88,15 +81,26 @@ export default function LeadsPage() {
     CONVERTED: 0,
     LOST: 0,
   });
-  const [selectedLeads, setSelectedLeads] = useState<number[]>([]);
 
-  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
+  // pagination states
+  const [pagination, setPagination] = useState<{
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  }>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
-  const [assignUserId, setAssignUserId] = useState<string>("");
+  const { currentPage, handlePageChange, handleJump, visiblePages } =
+    usePagination({
+      totalPages: pagination.totalPages,
+    });
 
-  const [assignOpen, setAssignOpen] = useState(false);
-
-  const [assigning, setAssigning] = useState(false);
+  const start = (currentPage - 1) * pagination.limit + 1;
 
   const { can } = usePermission();
 
@@ -106,12 +110,13 @@ export default function LeadsPage() {
 
       const data = await getLeads({
         status,
-        search,
+        search: debouncedSearch,
+        page: currentPage,
+        limit: pagination.limit,
       });
-
       setLeads(data.leads);
-
       setCounts(data.counts);
+      setPagination(data.pagination);
     } catch {
       toast.error("Failed to fetch leads");
     } finally {
@@ -119,71 +124,33 @@ export default function LeadsPage() {
     }
   };
 
-  const loadAssignableUsers = async () => {
-    try {
-      const data = await getAssignableUsers();
-
-      setAssignableUsers(data);
-    } catch {
-      toast.error("Failed to load users");
-    }
-  };
-
-  const groupedUsers = useMemo(() => {
-    return assignableUsers.reduce(
-      (acc, user) => {
-        if (!acc[user.role]) {
-          acc[user.role] = [];
-        }
-
-        acc[user.role].push(user);
-
-        return acc;
-      },
-      {} as Record<string, AssignableUser[]>,
-    );
-  }, [assignableUsers]);
-
-  const handleAssign = async () => {
-    if (!assignUserId || selectedLeads.length === 0) return;
-
-    try {
-      setAssigning(true);
-
-      await assignLeads({
-        leadIds: selectedLeads,
-        assignedTo: Number(assignUserId),
-      });
-
-      toast.success("Leads assigned successfully");
-
-      setSelectedLeads([]);
-
-      setAssignUserId("");
-
-      fetchLeads();
-    } catch {
-      toast.error("Failed to assign leads");
-    } finally {
-      setAssigning(false);
-    }
-  };
-
   useEffect(() => {
     fetchLeads();
-  }, [status]);
+  }, [status, currentPage, debouncedSearch]);
 
   useEffect(() => {
-    if (can("leads:assign")) loadAssignableUsers();
-  }, []);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      fetchLeads();
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      handlePageChange(1);
     }, 400);
 
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(timer);
   }, [search]);
+
+  const handleStatusChange = (newStatus: string) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (newStatus === "ALL") {
+      params.delete("status");
+    } else {
+      params.set("status", newStatus);
+    }
+
+    // Reset to first page
+    params.delete("page");
+
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -207,23 +174,19 @@ export default function LeadsPage() {
           <p className="text-muted-foreground">Manage and track all leads</p>
         </div>
 
-        <Link href="/dashboard/leads/create">
-          <Button>Create Lead</Button>
-        </Link>
+        <div className="flex gap-2">
+          {can("leads:create") && (
+            <Link href="/dashboard/leads/create">
+              <Button>Create Lead</Button>
+            </Link>
+          )}
+        </div>
       </div>
 
+      {/* leads  */}
       <Card>
-        <CardHeader>
-          <CardTitle>Lead Management</CardTitle>
-
-          <CardDescription>
-            {leads.length} lead
-            {leads.length !== 1 && "s"} found
-          </CardDescription>
-        </CardHeader>
-
         <CardContent className="space-y-4">
-          <Tabs value={status} onValueChange={setStatus}>
+          <Tabs value={status} onValueChange={handleStatusChange}>
             <TabsList className="flex w-full justify-start overflow-x-auto">
               {leadStatuses.map((item) => (
                 <TabsTrigger key={item} value={item}>
@@ -239,106 +202,89 @@ export default function LeadsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {can("leads:assign") && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBulkMode(!bulkMode);
+
+                  if (bulkMode) {
+                    setSelectedLeads([]);
+                  }
+                }}
+              >
+                {bulkMode ? "Cancel" : "Select Leads"}
+              </Button>
+            )}
 
             <Button variant="outline" onClick={fetchLeads}>
               Refresh
             </Button>
           </div>
 
-          {selectedLeads.length > 0 && (
-            <Card>
-              <CardContent className="flex items-center justify-between">
-                <div>
-                  <span className="font-medium">
-                    {selectedLeads.length} lead(s) selected
-                  </span>
-                </div>
+          {bulkMode && selectedLeads.length > 0 && (
+            <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-4 py-3">
+              <span className="text-sm font-medium">
+                {selectedLeads.length === 1
+                  ? "1 lead selected"
+                  : `${selectedLeads.length} leads selected`}
+              </span>
 
-                <div className="flex items-center gap-3">
-                  <Popover open={assignOpen} onOpenChange={setAssignOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-[280px] justify-between"
-                      >
-                        {assignUserId
-                          ? assignableUsers.find(
-                              (user) => String(user.id) === assignUserId,
-                            )?.fullname
-                          : "Assign User"}
+              <QuickAssignment
+                entityName="Leads"
+                canAssign={can("leads:assign") || false}
+                onAssign={async (user) => {
+                  try {
+                    await assignLeads({
+                      leadIds: selectedLeads,
+                      assignedTo: user.id,
+                    });
 
-                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
+                    toast.success(
+                      selectedLeads.length === 1
+                        ? "Lead assigned successfully"
+                        : "Leads assigned successfully",
+                    );
 
-                    <PopoverContent className="w-[280px] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search user..." />
+                    setSelectedLeads([]);
+                    setBulkMode(false);
 
-                        <CommandEmpty>No user found</CommandEmpty>
-
-                        {Object.entries(groupedUsers).map(([role, users]) => (
-                          <CommandGroup key={role} heading={role}>
-                            {users.map((user) => (
-                              <CommandItem
-                                key={user.id}
-                                value={`${user.fullname} ${user.role}`}
-                                onSelect={() => {
-                                  setAssignUserId(String(user.id));
-
-                                  setAssignOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    assignUserId === String(user.id)
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-
-                                {user.fullname}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        ))}
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  <Button
-                    disabled={!assignUserId || assigning}
-                    onClick={handleAssign}
-                  >
-                    Assign
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    await fetchLeads();
+                  } catch {
+                    toast.error("Failed to assign leads");
+                  }
+                }}
+              />
+            </div>
           )}
 
           {loading ? (
             <div className="flex justify-center py-12">Loading leads...</div>
           ) : leads.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <h3 className="font-medium">No leads found</h3>
+              <h3 className="font-medium">
+                {counts.ALL === 0 ? "No leads yet" : "No matching leads"}
+              </h3>
 
               <p className="text-sm text-muted-foreground">
-                Create your first lead to get started.
+                {counts.ALL === 0
+                  ? "Create your first lead to start managing potential customers."
+                  : "Try adjusting your search or filters."}
               </p>
 
-              <Link href="/dashboard/leads/create">
-                <Button>Create Lead</Button>
-              </Link>
+              {counts.ALL === 0 && can("leads:create") && (
+                <Link href="/dashboard/leads/create">
+                  <Button>Create Lead</Button>
+                </Link>
+              )}
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-muted/50">
-                    {can("leads:assign") && (
-                      <th className="w-12 p-4">
+            <div className="overflow-hidden rounded-lg border">
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow>
+                    {can("leads:assign") && bulkMode && (
+                      <TableHead className="w-12 p-4">
                         <Checkbox
                           checked={
                             leads.length > 0 &&
@@ -350,32 +296,47 @@ export default function LeadsPage() {
                             );
                           }}
                         />
-                      </th>
+                      </TableHead>
                     )}
 
-                    <th className="p-4 text-left font-medium">Name</th>
+                    <TableHead className="p-4 text-left font-medium">
+                      #
+                    </TableHead>
+                    <TableHead className="p-4 text-left font-medium">
+                      Lead
+                    </TableHead>
 
-                    <th className="p-4 text-left font-medium">Email</th>
+                    <TableHead className="p-4 text-left font-medium">
+                      Company
+                    </TableHead>
 
-                    <th className="p-4 text-left font-medium">Phone</th>
+                    <TableHead className="p-4 text-left font-medium">
+                      Status
+                    </TableHead>
+                    <TableHead className="p-4 text-left font-medium">
+                      Assigned to
+                    </TableHead>
 
-                    <th className="p-4 text-left font-medium">Company</th>
-
-                    <th className="p-4 text-left font-medium">Status</th>
-
-                    <th className="p-4 text-left font-medium">Source</th>
+                    <TableHead className="p-4 text-left font-medium">
+                      Source
+                    </TableHead>
 
                     {/* <th className="p-4 text-left font-medium">Assigned To</th> */}
 
-                    <th className="p-4 text-right font-medium">Actions</th>
-                  </tr>
-                </thead>
+                    <TableHead className="p-4 text-right font-medium">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
 
-                <tbody>
-                  {leads.map((lead) => (
-                    <tr key={lead.id} className="border-t">
-                      {can("leads:assign") && (
-                        <td className="p-4">
+                <TableBody>
+                  {leads.map((lead, index) => (
+                    <TableRow
+                      key={lead.id}
+                      className="transition-colors hover:bg-muted/40"
+                    >
+                      {can("leads:assign") && bulkMode && (
+                        <TableCell className="p-4">
                           <Checkbox
                             checked={selectedLeads.includes(lead.id)}
                             onCheckedChange={(checked) => {
@@ -388,55 +349,116 @@ export default function LeadsPage() {
                               }
                             }}
                           />
-                        </td>
+                        </TableCell>
                       )}
-                      <td className="p-4">
-                        <div className="font-medium">
-                          {lead.fname} {lead.lname}
+                      <TableCell className="p-4">
+                        <div className="font-medium">{start + index}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">
+                            {lead.fname} {lead.lname}
+                          </p>
+
+                          <p className="text-sm text-muted-foreground">
+                            {lead.email}
+                          </p>
+
+                          <p className="text-xs text-muted-foreground">
+                            {lead.phone1}
+                            {lead.phone2 ? ` • ${lead.phone2}` : ""}
+                          </p>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td className="p-4">{lead.email}</td>
+                      <TableCell className="p-4">
+                        {lead.company || "-"}
+                      </TableCell>
 
-                      <td className="p-4">{lead.phone1}, {lead.phone2}</td>
-
-                      <td className="p-4">{lead.company || "-"}</td>
-
-                      <td className="p-4">
+                      <TableCell className="p-4">
                         <div className="flex gap-2">
                           <Badge variant={getStatusVariant(lead.status)}>
                             {lead.status}
                           </Badge>
 
-                          {lead.customer_created && (
+                          {/* {lead.converted_at && (
                             <Badge variant="outline">Customer</Badge>
-                          )}
+                          )} */}
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td className="p-4">{lead.source}</td>
+                      <TableCell className="p-4">
+                        {lead.assigned_to_name ? (
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                              {lead.assigned_to_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .slice(0, 2)}
+                            </div>
 
-                      {/* <td className="p-4">
-                        {lead.assigned_to_name ?? (
+                            <span>{lead.assigned_to_name}</span>
+                          </div>
+                        ) : (
                           <Badge variant="outline">Unassigned</Badge>
                         )}
-                      </td> */}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{lead.source}</Badge>
+                      </TableCell>
 
-                      <td className="p-4 text-right">
-                        <Link href={`/dashboard/leads/${lead.id}`}>
-                           <Button size="sm" variant="outline">
-                            View
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
+                      <TableCell className="p-4 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild className="text-nowrap">
+                              <Link href={`/dashboard/leads/${lead.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View
+                              </Link>
+                            </DropdownMenuItem>
+
+                            {can("leads:assign") && (
+                              <DropdownMenuItem
+                                className="text-nowrap"
+                                onClick={() => {
+                                  setBulkMode(true);
+                                  setSelectedLeads([lead.id]);
+                                }}
+                              >
+                                <UserRoundPlus className="mr-2 h-4 w-4" />
+                                Assign
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* pagination */}
+      <DataTablePagination
+        total={pagination.total}
+        limit={pagination.limit}
+        totalPages={pagination.totalPages}
+        currentPage={currentPage}
+        visiblePages={visiblePages}
+        itemName="leads"
+        onPageChange={handlePageChange}
+        onJump={handleJump}
+      />
     </div>
   );
 }

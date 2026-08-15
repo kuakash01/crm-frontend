@@ -1,61 +1,68 @@
 import axios from "@/shared/lib/axios";
 
-// task services starts
-export const getTasks = async (
-  entityType: string,
-  entityId: number
-) => {
+import { TasksResponse, GetAllTasksParams, CreateTaskData } from "./tasks.types";
 
-  const response =
-    await axios.get(
-      `/tasks/${entityType}/${entityId}`
-    );
+export const getAllTasks = async ({
+  page,
+  limit,
+  search,
+  status,
+  entityType,
+  priority,
+  entityId
+}: GetAllTasksParams): Promise<TasksResponse> => {
+  const response = await axios.get("/tasks", {
+    params: {
+      page,
+      limit,
+      search,
+      status,
+      entityType,
+      priority,
+      entityId
+    },
+  });
 
   return response.data.data;
-
 };
 
-export const createTask = async (
-  entityType: string,
-  entityId: number,
-  data: {
-    title: string;
-    description?: string;
-    due_date?: string;
-    assigned_to: number;
-  }
-) => {
 
-  const response =
-    await axios.post(
-      `/tasks/${entityType}/${entityId}`,
-      data
-    );
+export const getTaskById = async (taskId: number) => {
+  const response = await axios.get(
+    `/tasks/${taskId}`
+  );
 
   return response.data.data;
+};
 
+
+export const createTask = async (
+  data: CreateTaskData
+) => {
+  const response = await axios.post(
+    "/tasks",
+    data
+  );
+
+  return response.data.data;
 };
 
 export const updateTask = async (
-  entityType: string,
-  entityId: number,
   taskId: number,
   data: {
     title: string;
-    description?: string;
-    due_date?: string;
+    description?: string | null;
+    due_date?: string | null;
+    priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
     assigned_to: number;
   }
 ) => {
-
-  const response =
-    await axios.patch(
-      `/tasks/${entityType}/${entityId}/${taskId}`,
-      data
-    );
+  const response = await axios.patch(
+    `/tasks/${taskId}`,
+    data
+  );
 
   return response.data.data;
-
 };
 
 export const updateTaskStatus = async (

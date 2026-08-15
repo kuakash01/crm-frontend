@@ -1,35 +1,22 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
-
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useForm, useWatch } from "react-hook-form";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { Input } from "@/components/ui/input";
-
-import { Label } from "@/components/ui/label";
-
-import { Textarea } from "@/components/ui/textarea";
-
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import {
   createDealSchema,
@@ -38,70 +25,62 @@ import {
 
 import { createDeal } from "@/features/deals/deals.service";
 
-import { getCustomers } from "@/features/customers/customers.service";
+import RecordPickerDialog, {
+  RecordOption,
+} from "@/shared/components/pickers/RecordPickerDialog";
 
-import { getServices } from "@/features/services/services.service";
-
-import { getAssignableUsers } from "@/shared/services/user.service";
-
+import { getCustomerById } from "@/features/customers/customers.service";
 import { Customer } from "@/features/customers/customer.types";
 
-import { Service } from "@/features/services/service.types";
-
-import { User } from "@/features/users/users.types";
+import { useAppSelector } from "@/store/hooks";
 
 export default function CreateDealPage() {
   const router = useRouter();
-
   const searchParams = useSearchParams();
 
   const customerId = searchParams.get("customerId");
 
-  const [loading, setLoading] = useState(true);
+  const currentUser = useAppSelector(
+    (state) => state.auth.user
+  );
 
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerPickerOpen, setCustomerPickerOpen] =
+    useState(false);
 
-  const [services, setServices] = useState<Service[]>([]);
+  const [servicePickerOpen, setServicePickerOpen] =
+    useState(false);
 
-  const [users, setUsers] = useState<User[]>([]);
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<RecordOption | null>(null);
+
+  const [selectedService, setSelectedService] =
+    useState<RecordOption | null>(null);
+
+  const [customerDetails, setCustomerDetails] =
+    useState<Customer | null>(null);
 
   const {
     register,
-
     handleSubmit,
-
     control,
-
     setValue,
-
     formState: { errors },
   } = useForm<CreateDealFormData>({
     resolver: zodResolver(createDealSchema),
 
     defaultValues: {
       title: "",
-
       price: 0,
-
       notes: "",
     },
   });
 
-  const selectedCustomer = useWatch({
-    control,
-    name: "customer_id",
-  });
-
-  const selectedService = useWatch({
+  const serviceId = useWatch({
     control,
     name: "service_id",
-  });
-
-  const selectedAssignee = useWatch({
-    control,
-    name: "assigned_to",
   });
 
   const dealValue = useWatch({
@@ -109,63 +88,145 @@ export default function CreateDealPage() {
     name: "price",
   });
 
+  /*
+   * Initial form setup
+   */
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [customersData, servicesData, usersData] = await Promise.all([
-        getCustomers(),
-
-        getServices(),
-
-        getAssignableUsers(),
-      ]);
-
-      setCustomers(customersData);
-
-      setServices(servicesData);
-
-      setUsers(usersData);
-
-      if (customerId) {
-        setValue("customer_id", Number(customerId));
-      }
-    } catch {
-      toast.error("Failed to load data");
-    } finally {
-      setLoading(false);
+    if (currentUser?.id) {
+      setValue(
+        "assigned_to",
+        currentUser.id
+      );
     }
-  };
 
+    if (customerId) {
+      setValue(
+        "customer_id",
+        Number(customerId)
+      );
+    }
+
+    setLoading(false);
+  }, [
+    currentUser?.id,
+    customerId,
+    setValue,
+  ]);
+
+  /*
+   * Load customer when creating
+   * a deal from customer page.
+   */
+  useEffect(() => {
+    if (!customerId) return;
+
+    const loadCustomer = async () => {
+      try {
+        const customer =
+          await getCustomerById(
+            Number(customerId)
+          );
+
+        setSelectedCustomer({
+          id: customer.id,
+
+          name:
+            `${customer.fname} ${
+              customer.lname ?? ""
+            }`.trim() ||
+            customer.company ||
+            "Unnamed",
+
+          subtitle:
+            customer.company ||
+            customer.phone1 ||
+            null,
+        });
+
+        setCustomerDetails(customer);
+
+        setValue(
+          "customer_id",
+          customer.id
+        );
+      } catch {
+        toast.error(
+          "Failed to load customer"
+        );
+      }
+    };
+
+    loadCustomer();
+  }, [customerId, setValue]);
+
+  /*
+   * Load full customer details
+   * after selecting from picker.
+   */
+  useEffect(() => {
+    if (!selectedCustomer) return;
+
+    const loadCustomer = async () => {
+      try {
+        const customer =
+          await getCustomerById(
+            selectedCustomer.id
+          );
+
+        setCustomerDetails(customer);
+      } catch {
+        toast.error(
+          "Failed to load customer"
+        );
+      }
+    };
+
+    loadCustomer();
+  }, [selectedCustomer]);
+
+  /*
+   * When a service is selected,
+   * automatically use its base price.
+   */
   useEffect(() => {
     if (!selectedService) return;
 
-    const service = services.find((s) => s.id === selectedService);
+    const basePrice =
+      selectedService.meta?.base_price;
 
-    if (!service) return;
+    if (
+      typeof basePrice === "number"
+    ) {
+      setValue(
+        "price",
+        basePrice
+      );
+    }
+  }, [
+    selectedService,
+    setValue,
+  ]);
 
-    setValue("price", Number(service.base_price));
-  }, [selectedService, services, setValue]);
-
-  const customer = customers.find((c) => c.id === selectedCustomer);
-
-  const service = services.find((s) => s.id === selectedService);
-
-  const assignee = users.find((u) => u.id === selectedAssignee);
-
-  const onSubmit = async (data: CreateDealFormData) => {
+  const onSubmit = async (
+    data: CreateDealFormData
+  ) => {
     try {
       setSaving(true);
 
-      const deal = await createDeal(data);
+      const deal =
+        await createDeal(data);
 
-      toast.success("Deal created successfully");
+      toast.success(
+        "Deal created successfully"
+      );
 
-      router.push(`/dashboard/deals/${deal.id}`);
+      router.push(
+        `/dashboard/deals/${deal.id}`
+      );
     } catch {
-      toast.error("Failed to create deal");
+      toast.error(
+        "Failed to create deal"
+      );
     } finally {
       setSaving(false);
     }
@@ -176,13 +237,19 @@ export default function CreateDealPage() {
       {/* Header */}
 
       <div>
-        <h1 className="text-3xl font-bold">Create Deal</h1>
+        <h1 className="text-3xl font-bold">
+          Create Deal
+        </h1>
 
-        <p className="text-muted-foreground">Create a new sales opportunity</p>
+        <p className="text-muted-foreground">
+          Create a new sales opportunity
+        </p>
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20">Loading...</div>
+        <div className="flex justify-center py-20">
+          Loading...
+        </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Side */}
@@ -190,15 +257,24 @@ export default function CreateDealPage() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Deal Information</CardTitle>
+                <CardTitle>
+                  Deal Information
+                </CardTitle>
               </CardHeader>
 
               <CardContent>
-                <form className="space-y-6">
+                <form
+                  onSubmit={handleSubmit(
+                    onSubmit
+                  )}
+                  className="space-y-6"
+                >
                   {/* Title */}
 
                   <div className="space-y-2">
-                    <Label>Deal Title</Label>
+                    <Label>
+                      Deal Title
+                    </Label>
 
                     <Input
                       placeholder="Website Redesign"
@@ -215,61 +291,116 @@ export default function CreateDealPage() {
                   {/* Customer */}
 
                   <div className="space-y-2">
-                    <Label>Customer</Label>
+                    <Label>
+                      Customer
+                    </Label>
 
-                    <Select
-                      value={selectedCustomer?.toString()}
-                      onValueChange={(value) =>
-                        setValue("customer_id", Number(value))
+                    <div
+                      onClick={() =>
+                        !customerId &&
+                        setCustomerPickerOpen(
+                          true
+                        )
                       }
+                      className={`flex min-h-10 items-center justify-between rounded-md border bg-background p-2 transition-colors ${
+                        !customerId
+                          ? "cursor-pointer hover:bg-muted/40"
+                          : "cursor-default"
+                      }`}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select customer" />
-                      </SelectTrigger>
+                      {selectedCustomer ? (
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {
+                              selectedCustomer.name
+                            }
+                          </span>
 
-                      <SelectContent>
-                        {customers.map((customer) => (
-                          <SelectItem
-                            key={customer.id}
-                            value={customer.id.toString()}
-                          >
-                            {customer.fname} {customer.lname}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <span className="text-xs text-muted-foreground">
+                            {selectedCustomer.subtitle ??
+                              "No additional information"}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          Select customer
+                        </span>
+                      )}
+
+                      {!customerId && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                        >
+                          {selectedCustomer
+                            ? "Change"
+                            : "Browse"}
+                        </Button>
+                      )}
+                    </div>
+
+                    {errors.customer_id && (
+                      <p className="text-sm text-red-500">
+                        {
+                          errors.customer_id
+                            .message
+                        }
+                      </p>
+                    )}
                   </div>
 
                   {/* Service */}
 
                   <div className="space-y-2">
-                    <Label>Service</Label>
+                    <Label>
+                      Service
+                    </Label>
 
-                    <Select
-                      value={selectedService?.toString()}
-                      onValueChange={(value) =>
-                        setValue("service_id", Number(value))
+                    <div
+                      onClick={() =>
+                        setServicePickerOpen(
+                          true
+                        )
                       }
+                      className="flex min-h-10 cursor-pointer items-center justify-between rounded-md border bg-background p-2 transition-colors hover:bg-muted/40"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select service" />
-                      </SelectTrigger>
+                      {selectedService ? (
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {
+                              selectedService.name
+                            }
+                          </span>
 
-                      <SelectContent>
-                        {services.map((service) => (
-                          <SelectItem
-                            key={service.id}
-                            value={service.id.toString()}
-                          >
-                            {service.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <span className="text-xs text-muted-foreground">
+                            {selectedService.subtitle ??
+                              "No additional information"}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          Select service
+                        </span>
+                      )}
 
-                    {service?.description && (
-                      <p className="text-sm text-muted-foreground">
-                        {service.description}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                      >
+                        {selectedService
+                          ? "Change"
+                          : "Browse"}
+                      </Button>
+                    </div>
+
+                    {errors.service_id && (
+                      <p className="text-sm text-red-500">
+                        {
+                          errors.service_id
+                            .message
+                        }
                       </p>
                     )}
                   </div>
@@ -277,7 +408,9 @@ export default function CreateDealPage() {
                   {/* Deal Value */}
 
                   <div className="space-y-2">
-                    <Label>Deal Value</Label>
+                    <Label>
+                      Deal Value (₹)
+                    </Label>
 
                     <Input
                       type="number"
@@ -296,64 +429,37 @@ export default function CreateDealPage() {
                   {/* Expected Close Date */}
 
                   <div className="space-y-2">
-                    <Label>Expected Close Date</Label>
+                    <Label>
+                      Expected Close Date
+                    </Label>
 
-                    <Input type="date" {...register("expected_close_date")} />
-                  </div>
-
-                  {/* Assigned To */}
-
-                  <div className="space-y-2">
-                    <Label>Assigned To</Label>
-
-                    <Select
-                      value={selectedAssignee?.toString()}
-                      onValueChange={(value) =>
-                        setValue("assigned_to", Number(value))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select user" />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {users.map((user) => (
-                          <SelectItem key={user.id} value={user.id.toString()}>
-                            {user.fullname}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Notes */}
-
-                  <div className="space-y-2">
-                    <Label>Notes</Label>
-
-                    <Textarea
-                      rows={5}
-                      placeholder="Additional notes..."
-                      {...register("notes")}
+                    <Input
+                      type="date"
+                      {...register(
+                        "expected_close_date"
+                      )}
                     />
                   </div>
 
-                  {/* part 2 */}
                   {/* Buttons */}
 
                   <div className="flex justify-end gap-3">
                     <Link href="/dashboard/deals">
-                      <Button variant="outline" type="button">
+                      <Button
+                        variant="outline"
+                        type="button"
+                      >
                         Cancel
                       </Button>
                     </Link>
 
                     <Button
-                      type="button"
+                      type="submit"
                       disabled={saving}
-                      onClick={handleSubmit(onSubmit)}
                     >
-                      {saving ? "Creating..." : "Create Deal"}
+                      {saving
+                        ? "Creating..."
+                        : "Create Deal"}
                     </Button>
                   </div>
                 </form>
@@ -366,49 +472,95 @@ export default function CreateDealPage() {
           <div>
             <Card className="sticky top-6">
               <CardHeader>
-                <CardTitle>Deal Summary</CardTitle>
+                <CardTitle>
+                  Deal Summary
+                </CardTitle>
               </CardHeader>
 
               <CardContent className="space-y-6">
+                {/* Customer */}
+
                 <div>
-                  <p className="text-sm text-muted-foreground">Customer</p>
+                  <p className="text-sm text-muted-foreground">
+                    Customer
+                  </p>
 
                   <p className="font-medium">
-                    {customer
-                      ? `${customer.fname} ${customer.lname}`
-                      : "Not selected"}
+                    {selectedCustomer?.name ??
+                      "Not selected"}
                   </p>
                 </div>
 
+                {/* Service */}
+
                 <div>
-                  <p className="text-sm text-muted-foreground">Service</p>
+                  <p className="text-sm text-muted-foreground">
+                    Service
+                  </p>
 
                   <p className="font-medium">
-                    {service?.name ?? "Not selected"}
+                    {selectedService?.name ??
+                      "Not selected"}
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-sm text-muted-foreground">Deal Value</p>
+                {/* Deal Value */}
 
-                  <p className="text-2xl font-bold">
-                    ₹{Number(dealValue ?? 0).toLocaleString()}
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Deal Value
                   </p>
+
+                  {Number(dealValue) > 0 ? (
+                    <p className="text-2xl font-bold">
+                      ₹
+                      {Number(
+                        dealValue
+                      ).toLocaleString()}
+                    </p>
+                  ) : (
+                    <p>Not specified</p>
+                  )}
                 </div>
 
+                {/* Deal Owner */}
+
                 <div>
-                  <p className="text-sm text-muted-foreground">Assigned To</p>
+                  <p className="text-sm text-muted-foreground">
+                    Deal Owner
+                  </p>
+
+                  {selectedCustomer ? (
+                    <p className="font-medium">
+                      {customerDetails?.assigned_to_name ??
+                        "Not assigned"}{" "}
+                      {customerDetails?.assigned_to ===
+                        currentUser?.id && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          (You)
+                        </span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="font-medium">
+                      Not available
+                    </p>
+                  )}
+                </div>
+
+                {/* Initial Stage */}
+
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Initial Stage
+                  </p>
 
                   <p className="font-medium">
-                    {assignee?.fullname ?? "Unassigned"}
+                    OPEN
                   </p>
                 </div>
 
-                <div>
-                  <p className="text-sm text-muted-foreground">Initial Stage</p>
-
-                  <p className="font-medium">OPEN</p>
-                </div>
+                {/* Customer Context */}
 
                 {customerId && (
                   <div className="rounded-lg border bg-muted/40 p-4">
@@ -417,7 +569,8 @@ export default function CreateDealPage() {
                     </p>
 
                     <p className="mt-1 text-xs text-muted-foreground">
-                      This deal was started from the customer profile.
+                      This deal was started from
+                      the customer profile.
                     </p>
                   </div>
                 )}
@@ -426,6 +579,49 @@ export default function CreateDealPage() {
           </div>
         </div>
       )}
+
+      {/* Customer Picker */}
+
+      <RecordPickerDialog
+        open={
+          customerPickerOpen &&
+          !customerId
+        }
+        onOpenChange={
+          setCustomerPickerOpen
+        }
+        module="CUSTOMER"
+        onSelect={(customer) => {
+          setSelectedCustomer(
+            customer
+          );
+
+          setValue(
+            "customer_id",
+            customer.id
+          );
+        }}
+      />
+
+      {/* Service Picker */}
+
+      <RecordPickerDialog
+        open={servicePickerOpen}
+        onOpenChange={
+          setServicePickerOpen
+        }
+        module="SERVICE"
+        onSelect={(service) => {
+          setSelectedService(
+            service
+          );
+
+          setValue(
+            "service_id",
+            service.id
+          );
+        }}
+      />
     </div>
   );
 }

@@ -40,28 +40,8 @@ import {
   updateCustomerStatus,
   assignCustomers,
 } from "@/features/customers/customers.service";
-import { getAssignableUsers } from "@/shared/services/user.service";
-
 
 import CustomerDeals from "@/features/customers/components/CustomerDeals";
-
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-
-import { ChevronsUpDown, Check } from "lucide-react";
-
-import { cn } from "@/lib/utils";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -69,8 +49,10 @@ import ActivitiesTab from "@/features/activities/component/ActivitiesTab";
 import NotesTab from "@/features/notes/component/NotesTab";
 import TasksTab from "@/features/tasks/component/TasksTab";
 
-import { AssignableUser } from "@/features/users/users.types";
 import { CustomerStatus, Customer } from "@/features/customers/customer.types";
+
+import AssignmentCard from "@/shared/components/user-assignment/AssigmentCard";
+import Link from "next/dist/client/link";
 
 export default function CustomerDetailsPage() {
   const { id } = useParams();
@@ -82,12 +64,7 @@ export default function CustomerDetailsPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([]);
-
-  const [assignOpen, setAssignOpen] = useState(false);
-
   const { can } = usePermission();
-
 
   const customerStatuses: CustomerStatus[] = [
     "ACTIVE",
@@ -95,19 +72,6 @@ export default function CustomerDetailsPage() {
     "INACTIVE",
     "CHURNED",
   ];
-
-  const groupedUsers = assignableUsers.reduce(
-    (acc, user) => {
-      if (!acc[user.role]) {
-        acc[user.role] = [];
-      }
-
-      acc[user.role].push(user);
-
-      return acc;
-    },
-    {} as Record<string, AssignableUser[]>,
-  );
 
   const fetchCustomer = async () => {
     try {
@@ -121,19 +85,8 @@ export default function CustomerDetailsPage() {
     }
   };
 
-  const loadAssignableUsers = async () => {
-    try {
-      const data = await getAssignableUsers();
-
-      setAssignableUsers(data);
-    } catch {
-      toast.error("Failed to load users");
-    }
-  };
-
   useEffect(() => {
     fetchCustomer();
-    if (can("customers:assign")) loadAssignableUsers();
   }, [id]);
 
   const handleSaveDetails = async () => {
@@ -176,8 +129,6 @@ export default function CustomerDetailsPage() {
       setDeleting(false);
     }
   };
-
-
 
   if (loading) {
     return <div className="p-6">Loading Customer...</div>;
@@ -370,99 +321,36 @@ export default function CustomerDetailsPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Customer Assignment</CardTitle>
-                  </CardHeader>
+                <AssignmentCard
+                  entityName="Customer"
+                  assignedUser={{
+                    id: Number(customer.assigned_to),
+                    name: customer.assigned_to_name ?? null,
+                  }}
+                  canAssign={can("customers:assign") ?? false}
+                  onAssign={async (user) => {
+                    try {
+                      await assignCustomers({
+                        customerIds: [customer.id],
+                        assignedTo: user.id,
+                      });
 
-                  <CardContent className="space-y-4">
-                    <div className="text-sm text-muted-foreground">
-                      Current Owner
-                    </div>
+                      setCustomer((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              assigned_to: user.id,
+                              assigned_to_name: user.fullname,
+                            }
+                          : prev,
+                      );
 
-                    <div className="font-medium">
-                      {customer.assigned_to_name ?? "Unassigned"}
-                    </div>
-
-                    {can("customers:assign") && (
-                      <Popover open={assignOpen} onOpenChange={setAssignOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between"
-                          >
-                            {customer.assigned_to
-                              ? assignableUsers.find(
-                                  (user) => user.id === customer.assigned_to,
-                                )?.fullname
-                              : "Transfer Customer"}
-
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="w-[300px] p-0">
-                          <Command>
-                            <CommandInput placeholder="Search user..." />
-
-                            <CommandEmpty>No user found.</CommandEmpty>
-
-                            {Object.entries(groupedUsers).map(
-                              ([role, users]) => (
-                                <CommandGroup key={role} heading={role}>
-                                  {users.map((user) => (
-                                    <CommandItem
-                                      key={user.id}
-                                      value={`${user.fullname} ${user.role}`}
-                                      onSelect={async () => {
-                                        try {
-                                          await assignCustomers({
-                                            customerIds: [customer.id],
-                                            assignedTo: user.id,
-                                          });
-
-                                          setCustomer({
-                                            ...customer,
-                                            assigned_to: user.id,
-                                            assigned_to_name: user.fullname,
-                                          });
-
-                                          toast.success("Customer transferred");
-                                        } catch {
-                                          toast.error("Transfer failed");
-                                        }
-
-                                        setAssignOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          customer.assigned_to === user.id
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-
-                                      <div className="flex flex-col">
-                                        <span>{user.fullname}</span>
-
-                                        <span className="text-xs text-muted-foreground">
-                                          {user.role}
-                                        </span>
-                                      </div>
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              ),
-                            )}
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  </CardContent>
-                </Card>
+                      toast.success("Customer transferred");
+                    } catch {
+                      toast.error("Transfer failed");
+                    }
+                  }}
+                />
 
                 {/* <Card>
                   <CardHeader>
@@ -473,6 +361,37 @@ export default function CustomerDetailsPage() {
                     <p>{customer.source}</p>
                   </CardContent>
                 </Card> */}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Customer Origin</CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="space-y-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Created From
+                      </p>
+
+                      <p className="font-medium">{customer.created_from}</p>
+                    </div>
+
+                    {customer.created_from === "LEAD" && customer.lead_id && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Original Lead
+                        </p>
+
+                        <Link
+                          href={`/dashboard/leads/${customer.lead_id}`}
+                          className="font-medium text-primary hover:underline"
+                        >
+                          Lead #{customer.lead_id}
+                        </Link>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 <Card>
                   <CardHeader>
@@ -496,7 +415,7 @@ export default function CustomerDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {true && (
+                {can("customers:delete") && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Danger Zone</CardTitle>
@@ -548,7 +467,11 @@ export default function CustomerDetailsPage() {
           </TabsContent>
 
           <TabsContent value="tasks">
-            <TasksTab entityType="CUSTOMER" entityId={customer.id} />
+            <TasksTab
+              entityType="CUSTOMER"
+              entityId={customer.id}
+              assignedTo={customer.assigned_to ?? null}
+            />
           </TabsContent>
 
           <TabsContent value="deals">

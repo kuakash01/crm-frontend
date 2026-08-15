@@ -33,6 +33,15 @@ export type Deal = {
   updated_at: string;
 };
 
+export type DealCounts = {
+  ALL: number;
+  OPEN: number;
+  QUOTATION_SENT: number;
+  NEGOTIATION: number;
+  WON: number;
+  LOST: number;
+};
+
 export type CreateDealDto = {
   title: string;
 
@@ -51,3 +60,37 @@ export type CreateDealDto = {
 
 export type UpdateDealDto =
   CreateDealDto;
+
+
+export type DealsResponse = {
+  deals: Deal[];
+  counts: DealCounts;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+
+export type DealsTableProps = {
+  loading: boolean;
+  deals: Deal[];
+  counts: DealCounts;
+
+  search: string;
+  stage: string;
+  canCreate:boolean;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+
+  onSearchChange: (value: string) => void;
+  onStageChange: (value: string) => void;
+  onRefresh: () => void;
+  onPageChange: (page: number) => void;
+};
