@@ -1,13 +1,26 @@
 # CRM Platform — Frontend
 
-A full-stack Customer Relationship Management (CRM) frontend built with Next.js, React, and TypeScript.
+A modern Customer Relationship Management (CRM) frontend built with **Next.js, React, and TypeScript**.
 
-The frontend provides the user interface for authentication, user management, leads, customers, deals, tasks, services, notes, activities, notifications, invitations, and profile/account settings.
+The frontend provides the user interface for authentication, user management, leads, customers, deals, tasks, services, notes, activities, notifications, invitations, profiles, and account settings.
+
+---
+
+## Overview
+
+The frontend is the client-facing application of the CRM platform.
+
+It communicates with the backend through HTTP API requests and Socket.IO for real-time updates. The frontend does **not** connect directly to PostgreSQL.
+
+The application follows a **feature-based architecture**, where each major business domain keeps its related components, API services, schemas, and types together.
+
+---
 
 ## Features
 
 ### Authentication
-- Registration
+
+- User registration
 - Login and logout
 - Email verification with OTP
 - Forgot-password flow
@@ -15,51 +28,124 @@ The frontend provides the user interface for authentication, user management, le
 - Change password
 - Invitation-based account setup
 - Protected dashboard routes
+- Password visibility controls
+- Authentication loading and error states
 
 ### CRM
-- Leads and lead conversion
-- Customers
-- Deals and pipeline stages
-- Tasks
-- Services
-- Notes
+
+#### Leads
+
+- Lead listing
+- Create and update leads
+- Lead assignment
+- Lead status tracking
+- Lead source tracking
+- Lead conversion
+
+#### Customers
+
+- Customer listing
+- Customer creation and management
+- Customer assignment
+- Customer status management
+- Lead-to-customer conversion
+- Customer origin tracking
+
+#### Deals
+
+- Deal management
+- Deal assignment
+- Deal pipeline stages
+- Deal pricing
+- Expected close dates
+
+#### Tasks
+
+- Task creation and management
+- Task assignment
+- Task status
+- Task priority
+- Due dates
+- CRM entity relationships
+
+#### Services
+
+- Service management
+- Service pricing
+- Active/inactive services
+- Organization-specific services
+
+#### Notes & Activities
+
+- Notes attached to CRM entities
 - Activity history
-- Notifications
+- Entity-based activity views
+
+#### Notifications
+
+- Notification center
+- Read/unread state
+- Real-time notification updates
+- Notification badges and feedback
 
 ### User & Organization Management
+
 - User listing
-- User invitations
+- User creation through invitations
 - Pending invitation management
+- Invitation acceptance
 - Roles and permissions UI
 - Reporting relationships
-- Personal profile and profile editing
+- Personal profile
+- Profile editing
+- Account information
+- Password management
 
 ### Real-Time Updates
+
 - Socket.IO client integration
 - Real-time notifications
+- Live updates without requiring a page refresh
+
+---
 
 ## Tech Stack
 
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- React Hook Form
-- Zod
-- Redux Toolkit
-- Axios
-- Socket.IO Client
-- Lucide React
-- Sonner
+### Core
+
+- **Next.js**
+- **React**
+- **TypeScript**
+
+### UI
+
+- **Tailwind CSS**
+- **shadcn/ui**
+- **Lucide React**
+- **Sonner**
+
+### Forms & Validation
+
+- **React Hook Form**
+- **Zod**
+- **@hookform/resolvers**
+
+### State & Networking
+
+- **Redux Toolkit**
+- **Axios**
+- **Socket.IO Client**
+
+---
 
 ## Architecture
 
-The frontend uses a feature-based structure so each business domain keeps its related UI, API services, schemas, and types together.
+The frontend follows a feature-based structure.
 
 ```text
 frontend/
 ├── public/
+│
 ├── src/
 │   ├── app/
 │   ├── components/
@@ -72,171 +158,12 @@ frontend/
 │   │   ├── tasks/
 │   │   ├── services/
 │   │   └── ...
+│   │
 │   ├── shared/
 │   └── lib/
+│
+├── next.config.ts
 ├── package.json
 ├── package-lock.json
-├── next.config.ts
 ├── tsconfig.json
 └── README.md
-```
-
-The frontend communicates with the backend through HTTP APIs and Socket.IO. It does not connect directly to PostgreSQL.
-
-```text
-Browser
-   │
-   ├── HTTP
-   └── WebSocket
-        │
-        ▼
-Express Backend
-        │
-        ▼
-PostgreSQL
-```
-
-## Environment Variables
-
-The frontend currently requires one environment variable.
-
-Create `.env.local` in the frontend root:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-For production, set it to the deployed backend URL:
-
-```env
-NEXT_PUBLIC_API_URL=https://your-backend-url.com
-```
-
-| Variable | Description | Example |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | Base URL of the backend API | `http://localhost:8000` |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js
-- npm
-- A running CRM backend
-
-### Install
-
-```bash
-git clone <your-repository-url>
-cd CRM/frontend
-npm install
-```
-
-Create `.env.local`:
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### Run Development Server
-
-```bash
-npm run dev
-```
-
-Open:
-
-```text
-http://localhost:3000
-```
-
-## Available Scripts
-
-```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
-```
-
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start the development server |
-| `npm run build` | Create a production build |
-| `npm run start` | Start the production server |
-| `npm run lint` | Run ESLint |
-
-## Authentication
-
-Authentication is implemented by the backend. The frontend provides the authentication screens and calls the corresponding backend APIs.
-
-Typical flow:
-
-```text
-Login / Register
-      ↓
-Backend authentication
-      ↓
-HTTP-only authentication cookie
-      ↓
-Protected dashboard
-```
-
-Password recovery remains inside the login experience:
-
-```text
-Login
-  ↓
-Forgot password?
-  ↓
-Email
-  ↓
-OTP
-  ↓
-New password
-  ↓
-Login
-```
-
-## Deployment
-
-The frontend can be deployed independently from the backend.
-
-Example setup:
-
-```text
-Frontend  → Vercel
-Backend   → Render
-Database  → Neon PostgreSQL
-Email     → Brevo
-```
-
-Set the production API URL in the hosting provider's environment variables:
-
-```env
-NEXT_PUBLIC_API_URL=https://your-backend-url.com
-```
-
-## Security
-
-Do not commit environment files containing secrets or environment-specific configuration.
-
-Recommended `.gitignore` entries:
-
-```gitignore
-.env
-.env.*
-!.env.example
-node_modules/
-.next/
-```
-
-`NEXT_PUBLIC_API_URL` is intentionally public because it is used by browser code. Secrets such as database credentials, JWT secrets, and Brevo API keys belong only in the backend environment.
-
-## Project Status
-
-The frontend currently covers the main CRM workflows for authentication, users, leads, customers, deals, tasks, services, notes, activities, notifications, invitations, and profile/account management.
-
-## Author
-
-**Akash Kumar**
