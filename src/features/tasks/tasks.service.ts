@@ -57,7 +57,7 @@ export const updateTask = async (
     assigned_to: number;
   }
 ) => {
-  const response = await axios.patch(
+  const response = await axios.put(
     `/tasks/${taskId}`,
     data
   );

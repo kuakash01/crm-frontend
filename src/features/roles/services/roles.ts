@@ -55,7 +55,6 @@ export const getRolePermissions = async (
   const response = await axios.get(
     `/roles/${roleId}/permissions`
   );
-  console.log("permissions details", response);
   return response.data.data;
 };
 

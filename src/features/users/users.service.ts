@@ -1,4 +1,5 @@
 import axios from "@/shared/lib/axios";
+import { UpdateMyProfileValues } from "./users.schema";
 
 export const getUsers = async () => {
   const response = await axios.get(
@@ -14,6 +15,7 @@ export const getUser = async (
   const response = await axios.get(
     `/users/${id}`
   );
+
 
   return response.data.data;
 };
@@ -78,3 +80,52 @@ export const changeUserStatus =
 
     return response.data;
   };
+
+
+
+export const getPendingInvitations = async () => {
+  const response = await axios.get(
+    "/users/invitations",
+  );
+
+  return response.data.data;
+};
+
+export const resendInvitation = async (
+  invitationId: number,
+) => {
+  const response = await axios.post(
+    `/users/invitations/${invitationId}/resend`,
+  );
+
+  return response.data.data;
+};
+
+export const cancelInvitation = async (
+  invitationId: number,
+) => {
+  const response = await axios.delete(
+    `/users/invitations/${invitationId}`,
+  );
+
+  return response.data.data;
+};
+
+export const getMyProfile = async () => {
+  const response = await axios.get(
+    "/users/me",
+  );
+
+  return response.data.data;
+};
+
+export const updateMyProfile = async (
+  data: UpdateMyProfileValues,
+) => {
+  const response = await axios.patch(
+    "/users/me",
+    data,
+  );
+
+  return response.data.data;
+};

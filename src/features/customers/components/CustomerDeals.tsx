@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { CustomerDealsProps } from "@/features/deals/deals.types";
 
 import { Deal } from "@/features/deals/deals.types";
 
@@ -14,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { getCustomerDeals } from "@/features/customers/customers.service";
 
-export default function CustomerDeals({ customerId }: CustomerDealsProps) {
+export default function CustomerDeals({ customerId }: { customerId: number }) {
   const [deals, setDeals] = useState<Deal[]>([]);
 
   useEffect(() => {

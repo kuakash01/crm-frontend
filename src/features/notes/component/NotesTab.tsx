@@ -57,7 +57,6 @@ export default function NotesTab({ entityType, entityId }: NotesTabProps) {
         page: currentPage,
         limit: pagination.limit,
       });
-      console.log("response notes", response);
       setNotes(response.data);
 
       setPagination(response.pagination);

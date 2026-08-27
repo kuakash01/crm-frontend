@@ -9,10 +9,7 @@ export const getNotifications = async (
   options?: NotificationPaginationOptions
 ) => {
   const response = await axios.get("/notifications", {
-    params: {
-      page: options?.page,
-      limit: options?.limit,
-    },
+    params: options,
   });
 
   return response.data.data;

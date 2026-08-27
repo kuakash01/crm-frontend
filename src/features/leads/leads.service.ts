@@ -27,8 +27,6 @@ export const createLead = async (data: any) => {
 
 export const getLeadById = async (id: number) => {
   const response = await axios.get(`/leads/${id}`);
-
-  console.log("lead response", response);
   return response.data.data;
 };
 

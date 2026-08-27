@@ -1,6 +1,7 @@
 import {
   createAsyncThunk,
   createSlice,
+  PayloadAction,
 } from "@reduxjs/toolkit";
 
 import {
@@ -22,13 +23,6 @@ interface NotificationState {
   loading: boolean;
   unreadLoading: boolean;
 
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-
   error: string | null;
 }
 
@@ -38,13 +32,6 @@ const initialState: NotificationState = {
 
   loading: false,
   unreadLoading: false,
-
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  },
 
   error: null,
 };
@@ -62,14 +49,16 @@ export const fetchNotifications = createAsyncThunk<
   "notifications/fetchNotifications",
   async (params, { rejectWithValue }) => {
     try {
+      // Return the complete response.
       return await getNotifications(params);
+
     } catch (error: any) {
       return rejectWithValue(
         error?.response?.data?.message ||
-        "Failed to load notifications"
+        "Failed to load notifications",
       );
     }
-  }
+  },
 );
 
 export const fetchUnreadNotificationCount =
@@ -87,10 +76,10 @@ export const fetchUnreadNotificationCount =
       } catch (error: any) {
         return rejectWithValue(
           error?.response?.data?.message ||
-          "Failed to load notification count"
+          "Failed to load notification count",
         );
       }
-    }
+    },
   );
 
 export const markNotificationRead =
@@ -102,20 +91,23 @@ export const markNotificationRead =
     }
   >(
     "notifications/markNotificationRead",
-    async (notificationId, { rejectWithValue }) => {
+    async (
+      notificationId,
+      { rejectWithValue },
+    ) => {
       try {
         await markNotificationAsRead(
-          notificationId
+          notificationId,
         );
 
         return notificationId;
       } catch (error: any) {
         return rejectWithValue(
           error?.response?.data?.message ||
-          "Failed to mark notification as read"
+          "Failed to mark notification as read",
         );
       }
-    }
+    },
   );
 
 export const markAllNotificationsRead =
@@ -133,13 +125,11 @@ export const markAllNotificationsRead =
       } catch (error: any) {
         return rejectWithValue(
           error?.response?.data?.message ||
-          "Failed to mark notifications as read"
+          "Failed to mark notifications as read",
         );
       }
-    }
+    },
   );
-
-
 
 const notificationSlice = createSlice({
   name: "notifications",
@@ -147,15 +137,44 @@ const notificationSlice = createSlice({
   initialState,
 
   reducers: {
+    // --------------------------------
+    // Real-time notification
+    // --------------------------------
+
+    addNotification: (
+      state,
+      action: PayloadAction<Notification>,
+    ) => {
+      const notification = action.payload;
+
+      const exists = state.notifications.some(
+        (item) => item.id === notification.id,
+      );
+
+      if (exists) {
+        return;
+      }
+
+      state.notifications.unshift(
+        notification,
+      );
+
+      if (!notification.is_read) {
+        state.unreadCount += 1;
+      }
+    },
+
+    // --------------------------------
+    // Clear notifications
+    // --------------------------------
+
     clearNotifications: (state) => {
       state.notifications = [];
-      state.pagination = {
-        page: 1,
-        limit: 10,
-        total: 0,
-        totalPages: 0,
-      };
     },
+
+    // --------------------------------
+    // Clear error
+    // --------------------------------
 
     resetNotificationError: (state) => {
       state.error = null;
@@ -173,20 +192,23 @@ const notificationSlice = createSlice({
         (state) => {
           state.loading = true;
           state.error = null;
-        }
+        },
       )
 
       .addCase(
         fetchNotifications.fulfilled,
         (state, action) => {
           state.loading = false;
-
+          /*
+           * The full API response is returned
+           * by the thunk.
+           *
+           * Redux only stores the notification
+           * array. Pagination stays outside Redux.
+           */
           state.notifications =
             action.payload.data;
-
-          state.pagination =
-            action.payload.pagination;
-        }
+        },
       )
 
       .addCase(
@@ -197,7 +219,7 @@ const notificationSlice = createSlice({
           state.error =
             action.payload ||
             "Failed to load notifications";
-        }
+        },
       );
 
     // --------------------------------
@@ -209,7 +231,7 @@ const notificationSlice = createSlice({
         fetchUnreadNotificationCount.pending,
         (state) => {
           state.unreadLoading = true;
-        }
+        },
       )
 
       .addCase(
@@ -219,43 +241,42 @@ const notificationSlice = createSlice({
 
           state.unreadCount =
             action.payload.count;
-        }
+        },
       )
 
       .addCase(
         fetchUnreadNotificationCount.rejected,
         (state) => {
           state.unreadLoading = false;
-        }
+        },
       );
 
     // --------------------------------
     // Mark one as read
     // --------------------------------
 
-    builder
-      .addCase(
-        markNotificationRead.fulfilled,
-        (state, action) => {
-          const notification =
-            state.notifications.find(
-              (item) =>
-                item.id === action.payload
-            );
+    builder.addCase(
+      markNotificationRead.fulfilled,
+      (state, action) => {
+        const notification =
+          state.notifications.find(
+            (item) =>
+              item.id === action.payload,
+          );
 
-          if (
-            notification &&
-            !notification.is_read
-          ) {
-            notification.is_read = true;
+        if (
+          notification &&
+          !notification.is_read
+        ) {
+          notification.is_read = true;
 
-            state.unreadCount = Math.max(
-              state.unreadCount - 1,
-              0
-            );
-          }
+          state.unreadCount = Math.max(
+            state.unreadCount - 1,
+            0,
+          );
         }
-      );
+      },
+    );
 
     // --------------------------------
     // Mark all as read
@@ -267,16 +288,17 @@ const notificationSlice = createSlice({
         state.notifications.forEach(
           (notification) => {
             notification.is_read = true;
-          }
+          },
         );
 
         state.unreadCount = 0;
-      }
+      },
     );
   },
 });
 
 export const {
+  addNotification,
   clearNotifications,
   resetNotificationError,
 } = notificationSlice.actions;

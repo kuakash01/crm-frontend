@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 
-import UserForm from "@/features/users/components/UseForm";
+import UserForm from "@/features/users/components/UserForm";
 
 import { getUser, updateUser } from "@/features/users/users.service";
 
@@ -40,8 +40,17 @@ export default function EditUserPage() {
   }
 
   return (
+    <div className="w-full ">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">Edit User</h1>
+
+        <p className="mt-2 text-sm text-muted-foreground">
+          Edit user details to your organization.
+        </p>
+      </div>
       <UserForm
-        title="Edit User"
+        title="User Details"
         submitLabel="Update User"
         initialValues={{
           fullName: user.fullname,
@@ -52,5 +61,6 @@ export default function EditUserPage() {
         }}
         onSubmit={handleSubmit}
       />
+    </div>
   );
 }

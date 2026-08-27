@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  Loader2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { formatDistanceToNow } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -13,40 +18,36 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  useAppDispatch,
+  useAppSelector,
+} from "@/store/hooks";
 
 import {
   fetchNotifications,
-  fetchUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/store/slices/notification.slice";
 
 import { Notification } from "../notification.types";
 
-import { formatDistanceToNow } from "date-fns";
-
 export default function NotificationBell() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const { notifications, unreadCount, loading, unreadLoading } = useAppSelector(
+  const {
+    notifications,
+    unreadCount,
+    loading,
+  } = useAppSelector(
     (state) => state.notifications,
   );
 
   const [open, setOpen] = useState(false);
 
   /*
-   * Load unread count when the
-   * component is mounted.
-   */
-  useEffect(() => {
-    dispatch(fetchUnreadNotificationCount());
-  }, [dispatch]);
-
-  /*
-   * Load notifications when
-   * the popover is opened.
+   * Load the latest 10 notifications
+   * when the popover is opened.
    */
   useEffect(() => {
     if (!open) return;
@@ -59,12 +60,16 @@ export default function NotificationBell() {
     );
   }, [open, dispatch]);
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = async (
+    notification: Notification,
+  ) => {
     /*
      * Mark as read first.
      */
     if (!notification.is_read) {
-      await dispatch(markNotificationRead(notification.id));
+      await dispatch(
+        markNotificationRead(notification.id),
+      );
     }
 
     setOpen(false);
@@ -72,7 +77,10 @@ export default function NotificationBell() {
     /*
      * Navigate to related entity.
      */
-    if (notification.entity_type && notification.entity_id) {
+    if (
+      notification.entity_type &&
+      notification.entity_id
+    ) {
       const routes: Record<string, string> = {
         LEAD: "leads",
         CUSTOMER: "customers",
@@ -81,10 +89,13 @@ export default function NotificationBell() {
         USER: "users",
       };
 
-      const route = routes[notification.entity_type];
+      const route =
+        routes[notification.entity_type];
 
       if (route) {
-        router.push(`/dashboard/${route}/${notification.entity_id}`);
+        router.push(
+          `/dashboard/${route}/${notification.entity_id}`,
+        );
       }
     }
   };
@@ -92,11 +103,16 @@ export default function NotificationBell() {
   const handleMarkAllAsRead = async () => {
     if (unreadCount === 0) return;
 
-    await dispatch(markAllNotificationsRead());
+    await dispatch(
+      markAllNotificationsRead(),
+    );
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={setOpen}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
@@ -107,19 +123,24 @@ export default function NotificationBell() {
           <Bell className="h-5 w-5" />
 
           {unreadCount > 0 && (
-            <span className="absolute right-[-2] top-[-5] flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
-              {unreadCount > 99 ? "99+" : unreadCount}
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-background">
+              {unreadCount > 99
+                ? "99+"
+                : unreadCount}
             </span>
           )}
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-[380px] p-0">
-        {/* Header */}
-
+      <PopoverContent
+        align="end"
+        className="w-[380px] p-0"
+      >
         <div className="flex items-center justify-between px-4 py-3">
           <div>
-            <h3 className="text-sm font-semibold">Notifications</h3>
+            <h3 className="text-sm font-semibold">
+              Notifications
+            </h3>
 
             {unreadCount > 0 && (
               <p className="text-xs text-muted-foreground">
@@ -143,8 +164,6 @@ export default function NotificationBell() {
 
         <Separator />
 
-        {/* Notifications */}
-
         <ScrollArea className="h-[420px]">
           {loading ? (
             <div className="flex h-[250px] items-center justify-center">
@@ -159,7 +178,9 @@ export default function NotificationBell() {
                 <Bell className="h-5 w-5 text-muted-foreground" />
               </div>
 
-              <p className="text-sm font-medium">No notifications</p>
+              <p className="text-sm font-medium">
+                No notifications
+              </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
                 You're all caught up.
@@ -167,20 +188,22 @@ export default function NotificationBell() {
             </div>
           ) : (
             <div>
-              {notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onClick={handleNotificationClick}
-                />
-              ))}
+              {notifications.map(
+                (notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    notification={notification}
+                    onClick={
+                      handleNotificationClick
+                    }
+                  />
+                ),
+              )}
             </div>
           )}
         </ScrollArea>
 
         <Separator />
-
-        {/* Footer */}
 
         <div className="p-2">
           <Button
@@ -188,7 +211,9 @@ export default function NotificationBell() {
             className="w-full text-sm"
             onClick={() => {
               setOpen(false);
-              router.push("/notifications");
+              router.push(
+                "/dashboard/notifications",
+              );
             }}
           >
             View all notifications
@@ -201,25 +226,32 @@ export default function NotificationBell() {
 
 interface NotificationItemProps {
   notification: Notification;
-  onClick: (notification: Notification) => void;
+  onClick: (
+    notification: Notification,
+  ) => void;
 }
 
-function NotificationItem({ notification, onClick }: NotificationItemProps) {
+function NotificationItem({
+  notification,
+  onClick,
+}: NotificationItemProps) {
   return (
     <button
       type="button"
       onClick={() => onClick(notification)}
       className={`w-full border-b px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
-        !notification.is_read ? "bg-muted/30" : ""
+        !notification.is_read
+          ? "bg-muted/30"
+          : ""
       }`}
     >
       <div className="flex gap-3">
-        {/* Unread indicator */}
-
         <div className="pt-1.5">
           <span
             className={`block h-2 w-2 rounded-full ${
-              notification.is_read ? "bg-transparent" : "bg-primary"
+              notification.is_read
+                ? "bg-transparent"
+                : "bg-red-600"
             }`}
           />
         </div>
@@ -228,16 +260,23 @@ function NotificationItem({ notification, onClick }: NotificationItemProps) {
           <div className="flex items-start justify-between gap-2">
             <p
               className={`text-sm ${
-                notification.is_read ? "font-medium" : "font-semibold"
+                notification.is_read
+                  ? "font-medium"
+                  : "font-semibold"
               }`}
             >
               {notification.title}
             </p>
 
             <span className="shrink-0 text-[11px] text-muted-foreground">
-              {formatDistanceToNow(new Date(notification.created_at), {
-                addSuffix: true,
-              })}
+              {formatDistanceToNow(
+                new Date(
+                  notification.created_at,
+                ),
+                {
+                  addSuffix: true,
+                },
+              )}
             </span>
           </div>
 

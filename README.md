@@ -1,59 +1,42 @@
-# CRM Frontend
+# CRM Platform — Frontend
 
-Frontend application for the CRM Platform built with **Next.js**, **TypeScript**, **Tailwind CSS**, **Redux Toolkit**, and **ShadCN UI**.
+A full-stack Customer Relationship Management (CRM) frontend built with Next.js, React, and TypeScript.
 
-## Requirements
+The frontend provides the user interface for authentication, user management, leads, customers, deals, tasks, services, notes, activities, notifications, invitations, and profile/account settings.
 
-- Node.js 20+
-- npm
+## Features
 
-## Installation
+### Authentication
+- Registration
+- Login and logout
+- Email verification with OTP
+- Forgot-password flow
+- Password reset
+- Change password
+- Invitation-based account setup
+- Protected dashboard routes
 
-Clone the repository and install dependencies.
+### CRM
+- Leads and lead conversion
+- Customers
+- Deals and pipeline stages
+- Tasks
+- Services
+- Notes
+- Activity history
+- Notifications
 
-```bash
-npm install
-```
+### User & Organization Management
+- User listing
+- User invitations
+- Pending invitation management
+- Roles and permissions UI
+- Reporting relationships
+- Personal profile and profile editing
 
-## Environment Variables
-
-Create a `.env.local` file in the project root.
-
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL |
-
-## Running the Development Server
-
-```bash
-npm run dev
-```
-
-The application will be available at:
-
-```
-http://localhost:3000
-```
-
-## Production Build
-
-Build the application:
-
-```bash
-npm run build
-```
-
-Start the production server:
-
-```bash
-npm start
-```
+### Real-Time Updates
+- Socket.IO client integration
+- Real-time notifications
 
 ## Tech Stack
 
@@ -61,67 +44,199 @@ npm start
 - React
 - TypeScript
 - Tailwind CSS
-- Redux Toolkit
-- Axios
-- ShadCN UI
+- shadcn/ui
 - React Hook Form
 - Zod
-- Sonner
+- Redux Toolkit
+- Axios
+- Socket.IO Client
 - Lucide React
+- Sonner
 
-## Project Structure
+## Architecture
 
+The frontend uses a feature-based structure so each business domain keeps its related UI, API services, schemas, and types together.
+
+```text
+frontend/
+├── public/
+├── src/
+│   ├── app/
+│   ├── components/
+│   ├── features/
+│   │   ├── auth/
+│   │   ├── users/
+│   │   ├── leads/
+│   │   ├── customers/
+│   │   ├── deals/
+│   │   ├── tasks/
+│   │   ├── services/
+│   │   └── ...
+│   ├── shared/
+│   └── lib/
+├── package.json
+├── package-lock.json
+├── next.config.ts
+├── tsconfig.json
+└── README.md
 ```
-src/
-│
-├── app/
-├── components/
-├── features/
-├── shared/
-├── store/
-├── lib/
-├── hooks/
-└── middleware.ts
+
+The frontend communicates with the backend through HTTP APIs and Socket.IO. It does not connect directly to PostgreSQL.
+
+```text
+Browser
+   │
+   ├── HTTP
+   └── WebSocket
+        │
+        ▼
+Express Backend
+        │
+        ▼
+PostgreSQL
 ```
 
-## Backend
+## Environment Variables
 
-This frontend requires the CRM Backend API to be running.
+The frontend currently requires one environment variable.
 
-Example:
+Create `.env.local` in the frontend root:
 
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
-http://localhost:8000/api
+
+For production, set it to the deployed backend URL:
+
+```env
+NEXT_PUBLIC_API_URL=https://your-backend-url.com
 ```
 
-## Features
+| Variable | Description | Example |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | Base URL of the backend API | `http://localhost:8000` |
 
-- Authentication
-- Role Based Access Control (RBAC)
-- Dashboard
-- Lead Management
-- Customer Management
-- Deal Management
-- Kanban Deal Pipeline
-- Services Management
-- Tasks
-- Notes
-- Activities
-- Pagination
-- Search & Filters
-- Responsive Dashboard Layout
+## Getting Started
 
-## Scripts
+### Prerequisites
+
+- Node.js
+- npm
+- A running CRM backend
+
+### Install
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Run production build
-npm run lint     # Run ESLint
+git clone <your-repository-url>
+cd CRM/frontend
+npm install
 ```
 
-## Notes
+Create `.env.local`:
 
-- Ensure the backend server is running before starting the frontend.
-- Update `.env.local` if the backend URL changes.
-- Restart the development server after modifying environment variables.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Run Development Server
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Available Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the development server |
+| `npm run build` | Create a production build |
+| `npm run start` | Start the production server |
+| `npm run lint` | Run ESLint |
+
+## Authentication
+
+Authentication is implemented by the backend. The frontend provides the authentication screens and calls the corresponding backend APIs.
+
+Typical flow:
+
+```text
+Login / Register
+      ↓
+Backend authentication
+      ↓
+HTTP-only authentication cookie
+      ↓
+Protected dashboard
+```
+
+Password recovery remains inside the login experience:
+
+```text
+Login
+  ↓
+Forgot password?
+  ↓
+Email
+  ↓
+OTP
+  ↓
+New password
+  ↓
+Login
+```
+
+## Deployment
+
+The frontend can be deployed independently from the backend.
+
+Example setup:
+
+```text
+Frontend  → Vercel
+Backend   → Render
+Database  → Neon PostgreSQL
+Email     → Brevo
+```
+
+Set the production API URL in the hosting provider's environment variables:
+
+```env
+NEXT_PUBLIC_API_URL=https://your-backend-url.com
+```
+
+## Security
+
+Do not commit environment files containing secrets or environment-specific configuration.
+
+Recommended `.gitignore` entries:
+
+```gitignore
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+```
+
+`NEXT_PUBLIC_API_URL` is intentionally public because it is used by browser code. Secrets such as database credentials, JWT secrets, and Brevo API keys belong only in the backend environment.
+
+## Project Status
+
+The frontend currently covers the main CRM workflows for authentication, users, leads, customers, deals, tasks, services, notes, activities, notifications, invitations, and profile/account management.
+
+## Author
+
+**Akash Kumar**

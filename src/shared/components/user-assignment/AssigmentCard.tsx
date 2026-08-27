@@ -70,7 +70,6 @@ export default function AssignmentCard({
       setLoadingUsers(true);
 
       const data = await getAssignableUsers();
-      console.log("assignable users details", data);
 
       setAssignableUsers(data);
     } catch {

@@ -12,7 +12,7 @@ import {
 import Sidebar from "@/shared/components/Sidebar";
 import Header from "@/shared/components/Header";
 import AuthGuard from "@/features/auth/components/AuthGuard";
-import SocketInitializer from "@/features/notifications/components/SocketInitializer";
+import SocketInitializer from "@/features/socket/components/SocketInitializer";
 
 export default function DashboardLayout({
   children,
@@ -26,7 +26,9 @@ export default function DashboardLayout({
   return (
     <AuthGuard>
       <div className="flex h-screen overflow-hidden">
+        {/* socket connection */}
         <SocketInitializer />
+        
         {/* Desktop Sidebar */}
         <Sidebar collapsed={collapsed} />
 

@@ -34,7 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 
-import {User} from "@/features/users/users.types";
+import { User } from "@/features/users/users.types";
 
 import {
   DropdownMenu,
@@ -54,8 +54,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -131,12 +129,18 @@ export default function UsersPage() {
             <p className="text-muted-foreground">Manage organization users</p>
           </div>
 
-          <Link href="/dashboard/users/create">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/users/invitations">
+              <Button variant="outline">Pending Invitations</Button>
+            </Link>
+
+            <Link href="/dashboard/users/create">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add User
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <Card>
@@ -244,28 +248,28 @@ export default function UsersPage() {
                         </DropdownMenuTrigger>
 
                         <DropdownMenuContent align="end">
-                            {user.role.toLowerCase() !== "admin" && (
-                              <>
-                                <Link href={`/dashboard/users/${user.id}/edit`}>
-                                  <DropdownMenuItem>Edit</DropdownMenuItem>
-                                </Link>
-                                
-                                <DropdownMenuSeparator />
+                          {user.role.toLowerCase() !== "admin" && (
+                            <>
+                              <Link href={`/dashboard/users/${user.id}/edit`}>
+                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                              </Link>
 
-                                <DropdownMenuItem
-                                  className="text-red-500"
-                                  onClick={() => setSelectedUser(user)}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </>
-                            )}
+                              <DropdownMenuSeparator />
 
-                            {user.role.toLowerCase() === "admin" && (
-                              <DropdownMenuItem disabled>
-                                Owner Account
+                              <DropdownMenuItem
+                                className="text-red-500"
+                                onClick={() => setSelectedUser(user)}
+                              >
+                                Delete
                               </DropdownMenuItem>
-                            )}
+                            </>
+                          )}
+
+                          {user.role.toLowerCase() === "admin" && (
+                            <DropdownMenuItem disabled>
+                              Owner Account
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

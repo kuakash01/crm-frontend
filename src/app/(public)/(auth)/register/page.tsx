@@ -2,6 +2,17 @@
 
 import Image from "next/image";
 import RegisterOrganizationForm from "@/features/auth/components/RegisterOrganisationForm";
+import type { Metadata } from "next";
+
+
+export const metadata: Metadata = {
+  title: "Create Your CRM Account",
+  description: "Create an account and start using the CRM.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function RegisterPage() {
   return (
