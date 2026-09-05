@@ -501,6 +501,7 @@ import {
   Lock,
   Eye,
   EyeOff,
+  ShieldAlert,
 } from "lucide-react";
 
 import { useForm } from "react-hook-form";
@@ -547,6 +548,7 @@ type Profile = {
   reportsToName: string | null;
   createdAt: string;
   updatedAt: string;
+  isDemo?: boolean;
 };
 
 export default function ProfilePage() {
@@ -554,6 +556,13 @@ export default function ProfilePage() {
     useState<Profile | null>(null);
 
   const [loading, setLoading] = useState(true);
+
+  const isDemo = Boolean(
+    profile?.isDemo ||
+    profile?.email?.toLowerCase().includes("demo") ||
+    profile?.email?.includes("acme") ||
+    profile?.email?.includes("globex")
+  );
 
   // Profile editing
   const [editing, setEditing] = useState(false);
@@ -799,6 +808,20 @@ export default function ProfilePage() {
           </p>
         </div>
 
+        {isDemo && (
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                Portfolio Demo Account (Protected Mode)
+              </h4>
+              <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5 leading-relaxed">
+                Profile edits and password changes are disabled on demo accounts to ensure a seamless evaluation experience for all reviewers.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6">
 
           {/* ========================================
@@ -822,10 +845,12 @@ export default function ProfilePage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleEdit}
+                    onClick={isDemo ? () => toast.info("Profile editing is locked on demo accounts.") : handleEdit}
+                    disabled={isDemo}
+                    className={isDemo ? "opacity-60 cursor-not-allowed" : ""}
                   >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
+                    {isDemo ? <Lock className="mr-2 h-4 w-4" /> : <Pencil className="mr-2 h-4 w-4" />}
+                    {isDemo ? "Locked (Demo)" : "Edit"}
                   </Button>
                 )}
               </div>
@@ -1327,12 +1352,15 @@ export default function ProfilePage() {
 
                   <Button
                     variant="outline"
-                    onClick={() => {
+                    onClick={isDemo ? () => toast.info("Password change is locked on demo accounts.") : () => {
                       resetPasswordForm();
                       setChangingPassword(true);
                     }}
+                    disabled={isDemo}
+                    className={isDemo ? "opacity-60 cursor-not-allowed" : ""}
                   >
-                    Change Password
+                    {isDemo ? <Lock className="mr-2 h-4 w-4" /> : null}
+                    {isDemo ? "Locked (Demo)" : "Change Password"}
                   </Button>
                 </div>
               )}

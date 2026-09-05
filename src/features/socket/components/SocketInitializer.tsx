@@ -17,6 +17,8 @@ export default function SocketInitializer() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    let isMounted = true;
+
     const handleConnect = () => {
       console.log("Connected to Socket.IO:", socket.id);
 
@@ -35,14 +37,40 @@ export default function SocketInitializer() {
     };
 
     socket.on("connect", handleConnect);
-
     socket.on("disconnect", handleDisconnect);
-
     socket.on("notification:new", handleNewNotification);
 
-    socket.connect();
+    // Fetch a short-lived socket token via the Next.js proxy (/api/* → Render).
+    // This is needed in production because Socket.IO connects directly to
+    // the Render backend URL, so cross-domain HttpOnly cookies are never sent.
+    // The token endpoint reads the cookie server-side (same domain, so it works)
+    // and returns the JWT as JSON, which we pass as socket.auth.token.
+    const connectSocket = async () => {
+      try {
+        const res = await fetch("/api/auth/socket-token", {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          console.warn("Socket token fetch failed:", res.status);
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!isMounted) return;
+
+        socket.auth = { token: data.token };
+        socket.connect();
+      } catch (err) {
+        console.warn("Socket connection error:", err);
+      }
+    };
+
+    connectSocket();
 
     return () => {
+      isMounted = false;
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("notification:new", handleNewNotification);
