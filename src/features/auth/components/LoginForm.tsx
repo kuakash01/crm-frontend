@@ -280,7 +280,7 @@ export default function LoginForm() {
                     type="button"
                     onClick={() =>
                       fillDemoCredentials(
-                        "org1@test.com",
+                        "org1@xyz.com",
                         "@Test123",
                         "Org 1 Admin / Owner"
                       )
@@ -291,7 +291,7 @@ export default function LoginForm() {
                       <ShieldCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                       <span className="text-xs font-semibold text-foreground">Org 1 Admin (Owner)</span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground font-mono">org1@test.com</span>
+                    <span className="text-[11px] text-muted-foreground font-mono">org1@xyz.com</span>
                   </button>
 
                   {/* Teams Grid under Org 1 */}
@@ -393,7 +393,7 @@ export default function LoginForm() {
                     type="button"
                     onClick={() =>
                       fillDemoCredentials(
-                        "org2@test.com",
+                        "org2@abc.com",
                         "@Test123",
                         "Org 2 Admin"
                       )
@@ -404,7 +404,7 @@ export default function LoginForm() {
                       <ShieldCheck className="h-3.5 w-3.5 text-purple-600 shrink-0" />
                       <span className="text-xs font-semibold text-foreground">Org 2 Admin (Owner)</span>
                     </div>
-                    <span className="text-[11px] text-muted-foreground font-mono">org2@test.com</span>
+                    <span className="text-[11px] text-muted-foreground font-mono">org2@abc.com</span>
                   </button>
                 </div>
               </div>
