@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const backendUrl =
-  process.env.BACKEND_URL || "http://localhost:8000";
+  process.env.BACKEND_URL;
 
 const nextConfig: NextConfig = {
   /* config options here */

@@ -24,6 +24,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ListSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 type Role = {
   id: number;
@@ -196,7 +197,7 @@ export default function RolesPage() {
 
         <CardContent>
           {loading ? (
-            <div>Loading...</div>
+            <ListSkeleton items={3} />
           ) : roles.length === 0 ? (
             <div className="text-muted-foreground">No roles found</div>
           ) : (

@@ -5,12 +5,32 @@ export interface DashboardStats {
   totalRevenue: number;
 }
 
+export interface ConversionMetric {
+  label: string;
+  current: number;
+  previous: number;
+  unit?: string;
+  isPercentage?: boolean;
+}
+
+export interface TopPerformer {
+  id: number;
+  name: string;
+  metric: string;
+  value: number | string;
+  change?: number;
+  avatar?: string;
+}
+
 export interface DashboardResponse {
   stats: DashboardStats;
   pipeline: PipelineSummary;
   todayTasks: DashboardTask[];
   recentActivities: DashboardActivity[];
-    revenueChart: RevenueChartItem[];
+  revenueChart: RevenueChartItem[];
+  conversionMetrics: ConversionMetric[];
+  topLeads: TopPerformer[];
+  topCustomers: TopPerformer[];
 }
 
 export interface DashboardTask {

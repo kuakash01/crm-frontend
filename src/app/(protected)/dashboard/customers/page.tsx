@@ -45,6 +45,7 @@ import {
 import { MoreHorizontal, Eye, UserRoundPlus } from "lucide-react";
 
 import QuickAssignment from "@/shared/components/user-assignment/QuickAssignment";
+import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 const statuses = ["ALL", "ACTIVE", "ON_HOLD", "INACTIVE", "CHURNED"] as const;
 
@@ -253,7 +254,7 @@ export default function CustomersPage() {
 
           {/* Table */}
           {loading ? (
-            <div className="flex justify-center py-12">Loading leads...</div>
+            <TableSkeleton rows={pagination.limit} />
           ) : customers.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
               <h3 className="font-medium">

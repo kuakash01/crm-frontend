@@ -62,6 +62,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import AssignmentCard from "@/shared/components/user-assignment/AssigmentCard";
+import { DetailPageSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 // Stage visual language — each stage gets a consistent dot + badge color
 // so the pipeline status reads at a glance across the whole app.
@@ -229,15 +230,7 @@ export default function DealDetailsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-8 w-64 animate-pulse rounded-md bg-muted" />
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="h-96 animate-pulse rounded-xl bg-muted lg:col-span-2" />
-          <div className="h-96 animate-pulse rounded-xl bg-muted" />
-        </div>
-      </div>
-    );
+    return <DetailPageSkeleton />;
   }
 
   if (!deal) return null;

@@ -36,6 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { DetailPageSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 export default function ServiceDetailsPage() {
   const { id } = useParams();
@@ -143,7 +144,7 @@ export default function ServiceDetailsPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return <DetailPageSkeleton />;
   }
 
   if (!service) return null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Check, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, Check, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 
@@ -21,6 +21,7 @@ import {
 import { getNotifications } from "@/features/notifications/notification.service";
 
 import { Notification } from "@/features/notifications/notification.types";
+import { ListSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 const PAGE_LIMIT = 10;
 
@@ -141,12 +142,7 @@ export default function NotificationsPage() {
       {/* Notification list */}
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Loading notifications...
-          </div>
-        </div>
+        <ListSkeleton items={pagination.limit} />
       ) : notifications.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <Bell className="h-8 w-8 text-muted-foreground" />

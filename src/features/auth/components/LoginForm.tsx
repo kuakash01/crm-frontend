@@ -104,6 +104,10 @@ export default function LoginForm() {
 
       await login(loginData);
 
+      try {
+        localStorage.setItem("crm_session_active", "true");
+      } catch {}
+
       toast.success("Login successful");
 
       router.push("/dashboard");
@@ -262,7 +266,7 @@ export default function LoginForm() {
             </button>
 
             {showDemoAccounts && (
-              <div className="p-3 pt-0 space-y-2.5 animate-in fade-in-50 duration-200">
+              <div className="p-3 pt-0 space-y-2.5 animate-in fade-in-50 duration-200 max-h-52 overflow-y-auto pr-1">
                 {/* Organization 1 & Hierarchy */}
                 <div className="space-y-2 rounded-lg border border-border/80 bg-background/80 p-2.5 shadow-xs">
                   <div className="flex items-center justify-between">

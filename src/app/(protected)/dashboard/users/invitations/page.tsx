@@ -28,6 +28,7 @@ import {
   resendInvitation,
   cancelInvitation,
 } from "@/features/users/users.service";
+import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 type Invitation = {
   id: number;
@@ -144,9 +145,7 @@ export default function InvitationsPage() {
 
           <CardContent>
             {loading ? (
-              <div className="py-12 text-center text-sm text-muted-foreground">
-                Loading invitations...
-              </div>
+              <TableSkeleton rows={5} />
             ) : invitations.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm font-medium">No pending invitations</p>

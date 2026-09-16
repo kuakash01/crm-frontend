@@ -196,41 +196,33 @@ export default function RegisterOrganizationTypeForm() {
   // -------------------------------
   return (
     <Card className="shadow-xl">
-      <CardHeader className="space-y-2">
-        <CardTitle className="text-3xl font-bold tracking-tight">
+      <CardHeader className="space-y-1 pb-2">
+        <CardTitle className="text-2xl font-bold tracking-tight">
           Create Workspace
         </CardTitle>
 
-        <CardDescription>
+        <CardDescription className="text-xs">
           Set up your organization and admin credentials.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
-        {/* Demo Fast-Track Callout */}
-        <div className="mb-5 rounded-xl border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20 p-3.5 space-y-1.5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-              <Sparkles className="h-3.5 w-3.5" /> Fast Portfolio Evaluation
-            </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-300">
-              Demo Ready
-            </span>
+        {/* Compact Demo Fast-Track Banner */}
+        <div className="mb-3.5 flex items-center justify-between rounded-lg border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/30 px-3 py-2 text-xs shadow-2xs">
+          <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+            <Sparkles className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className="font-medium">Evaluating? Skip setup & test demo roles</span>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Evaluating this project? Skip registration and test pre-seeded organizations, managers, and deals directly with 1-click accounts.
-          </p>
-          <div className="pt-0.5">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Explore 1-Click Demo Logins <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1 font-semibold text-blue-600 dark:text-blue-400 hover:underline shrink-0"
+          >
+            <span>Demo Logins</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
           {/* Organization Name */}
           <div>
             <Label htmlFor="organizationName" className="text-xs font-semibold">

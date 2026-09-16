@@ -15,9 +15,11 @@ import {
   User,
   Building2,
   Briefcase,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useAuthSession } from "@/shared/hooks/useAuthSession";
 import {
   Card,
   CardContent,
@@ -51,6 +53,7 @@ type InvitationDetails = {
 export default function InvitePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuthSession();
 
   const token = searchParams.get("token");
 
@@ -206,14 +209,26 @@ export default function InvitePage() {
           </CardHeader>
 
           <CardContent>
-            <Button
-              className="w-full"
-              onClick={() =>
-                router.push("/login")
-              }
-            >
-              Go to Login
-            </Button>
+            {isAuthenticated ? (
+              <Button
+                className="w-full gap-2"
+                onClick={() =>
+                  router.push("/dashboard")
+                }
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Go to Dashboard
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                onClick={() =>
+                  router.push("/login")
+                }
+              >
+                Go to Login
+              </Button>
+            )}
           </CardContent>
         </Card>
       </main>

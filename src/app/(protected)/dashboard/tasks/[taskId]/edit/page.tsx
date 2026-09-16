@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 
 import TaskForm from "@/features/tasks/component/TaskForm";
 import { getTaskById } from "@/features/tasks/tasks.service";
+import { LoadingSpinner } from "@/shared/components/loading/LoadingSpinner";
 
 import type { TaskDetails } from "@/features/tasks/tasks.types";
 
@@ -51,11 +51,7 @@ export default function EditTaskPage() {
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-
-          <p className="text-sm text-muted-foreground">Loading task...</p>
-        </div>
+        <LoadingSpinner text="Loading task..." />
       </div>
     );
   }

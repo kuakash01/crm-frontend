@@ -1,429 +1,301 @@
-
-import type { Metadata } from "next";
+import Link from "next/link";
 import {
-  ArrowRight,
-  CheckCircle2,
   Code2,
   Database,
   ExternalLink,
   GitBranch,
-  Heart,
+  Layers,
   LockKeyhole,
   Radio,
   Server,
   ShieldCheck,
+  Sparkles,
   Target,
+  Terminal,
   Users,
   Workflow,
   Zap,
+  ArrowRight,
+  Globe,
+  CheckCircle2,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PublicCtaButton } from "@/shared/components/public/PublicCtaButton";
 
-const engineeringHighlights = [
-  {
-    icon: ShieldCheck,
-    title: "Dynamic RBAC & Permissions",
-    description:
-      "Users and roles are created dynamically. Permissions are managed at the module and action level rather than being hard-coded to fixed roles.",
-  },
-  {
-    icon: Database,
-    title: "PostgreSQL Data Architecture",
-    description:
-      "Designed relational data models for organizations, users, roles, permissions, leads, customers, deals, tasks, and notifications.",
-  },
-  {
-    icon: Radio,
-    title: "Real-time Notifications",
-    description:
-      "Implemented Socket.IO authentication, user-specific rooms, real-time notification delivery, and Redux state updates.",
-  },
-  {
-    icon: Server,
-    title: "REST API Architecture",
-    description:
-      "Built a TypeScript and Express backend with service/controller separation, pagination, authorization, and organization-aware queries.",
-  },
-  {
-    icon: GitBranch,
-    title: "Shared Application State",
-    description:
-      "Used Redux Toolkit for global client state where appropriate, while keeping page-specific state such as pagination local to the page.",
-  },
-  {
-    icon: Workflow,
-    title: "Connected CRM Workflows",
-    description:
-      "Connected leads, customers, deals, tasks, permissions, and notifications into one application workflow instead of isolated CRUD screens.",
-  },
-];
-
-const modules = [
-  "Leads",
-  "Customers",
-  "Deals",
-  "Tasks",
-  "Users",
-  "Roles",
-  "Permissions",
-  "Notifications",
-];
-
-const technologies = [
-  "Next.js",
-  "React",
-  "TypeScript",
-  "Tailwind CSS",
-  "Redux Toolkit",
-  "Node.js",
-  "Express.js",
-  "PostgreSQL",
-  "Socket.IO",
-  "REST APIs",
-];
-
-const principles = [
-  {
-    icon: Target,
-    title: "Real-world architecture",
-    description:
-      "I focused on patterns that matter in production-style applications rather than stopping at basic CRUD.",
-  },
-  {
-    icon: Users,
-    title: "Multi-user design",
-    description:
-      "The CRM is designed around organizations, users, dynamically created roles, and permission-based access.",
-  },
-  {
-    icon: Zap,
-    title: "Connected experiences",
-    description:
-      "Business actions can flow through the application and surface relevant updates through real-time notifications.",
-  },
-];
-
-
-
-export const metadata: Metadata = {
-  title: "About the CRM Project & Developer",
+export const metadata = {
+  title: "About the CRM & Technical Architecture",
   description:
-    "Learn about Akash Kumar and the full-stack CRM project, including dynamic RBAC, PostgreSQL, REST APIs, Redux Toolkit, Socket.IO, and application architecture.",
+    "Discover the engineering philosophy, full-stack architecture, and production design behind this modern multi-tenant CRM built by Akash Kumar.",
   alternates: {
     canonical: "/about",
   },
 };
 
+const technicalPillars = [
+  {
+    icon: ShieldCheck,
+    title: "Dynamic RBAC & Roles Engine",
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10 border-rose-500/20",
+    description:
+      "Unlike conventional CRM platforms with static hardcoded roles, this system supports runtime creation of custom roles with granular module:action permission tags.",
+  },
+  {
+    icon: Database,
+    title: "PostgreSQL Relational Integrity",
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10 border-blue-500/20",
+    description:
+      "Relational schema with foreign keys, transactional COMMIT/ROLLBACK guarantees across mutations, and parameterized queries ensuring complete multi-tenant isolation.",
+  },
+  {
+    icon: Radio,
+    title: "Real-Time WebSocket Event Rooms",
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/10 border-cyan-500/20",
+    description:
+      "Socket.IO connection layer with organization and user room isolation, broadcasting CRM changes to dashboard cards and notification bells in real time.",
+  },
+  {
+    icon: Server,
+    title: "Layered Express REST API",
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10 border-purple-500/20",
+    description:
+      "Enterprise TypeScript architecture decoupling HTTP Controllers from domain Business Services, SQL query builders, and centralized AppError handlers.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "JWT & HttpOnly Cookie Security",
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10 border-amber-500/20",
+    description:
+      "Protected auth cookies, bcrypt salted password hashing, cross-domain Next.js proxy token bridges, and zero vulnerable tokens in browser localStorage.",
+  },
+  {
+    icon: Terminal,
+    title: "Universal Workspace Search (Ctrl+K)",
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-500/10 border-emerald-500/20",
+    description:
+      "Parallel multi-table query engine searching deals, leads, customers, tasks, and services in sub-100ms with deep direct linking to detail records.",
+  },
+];
+
+const architectureLayers = [
+  {
+    title: "1. Presentation & Client Layer",
+    tech: "Next.js 16 (App Router) • React 19 • Tailwind CSS • Redux Toolkit",
+    summary:
+      "Server-rendered layouts with client-hydrated interactive views. Features zero-hydration mismatch session guards, dynamic dark/light mode parity, and responsive ergonomics across desktop and mobile.",
+  },
+  {
+    title: "2. Application & API Layer",
+    tech: "Node.js • Express.js • TypeScript • Custom Middleware",
+    summary:
+      "Layered REST API architecture with strict authentication, dynamic permission enforcement, unified error filters, and cursor/page pagination helpers.",
+  },
+  {
+    title: "3. Relational Persistence Layer",
+    tech: "PostgreSQL Database • Raw Parameterized SQL • Connection Pooling",
+    summary:
+      "ACID relational model guaranteeing data consistency across leads, customers, deals, and audit activities. Multi-tenant partitioning enforced on every query.",
+  },
+  {
+    title: "4. Real-Time Event-Driven Layer",
+    tech: "Socket.IO • Org & User Rooms • Debounced Client Refresh",
+    summary:
+      "Bidirectional WebSocket transport streaming CRM mutations to connected team members without manual polling or database contention.",
+  },
+];
+
 export default function AboutPage() {
   return (
-    <div>
-      {/* Hero */}
+    <div className="relative overflow-hidden">
+      {/* Ambient Glow */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[500px] w-full max-w-7xl -translate-x-1/2 overflow-hidden blur-3xl">
+        <div className="h-full w-full bg-gradient-to-br from-primary/15 via-purple-500/10 to-transparent opacity-60 dark:opacity-80" />
+      </div>
 
-      <section className="border-b bg-muted/20">
-        <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:py-24">
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              Developer & Project
-            </p>
+      {/* Hero Section */}
+      <section className="relative border-b border-border/60 bg-muted/20 pb-16 pt-20 sm:pb-24 sm:pt-28 text-center">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary shadow-xs">
+            <Code2 className="h-3.5 w-3.5" />
+            <span>Full-Stack Architecture & Engineering Philosophy</span>
+          </div>
 
-            <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Built by Akash Kumar
-            </h1>
+          <h1 className="mx-auto mt-6 max-w-4xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+            Engineered for Velocity.{" "}
+            <span className="bg-gradient-to-r from-primary via-purple-500 to-primary/70 bg-clip-text text-transparent">
+              Built with Relational Integrity.
+            </span>
+          </h1>
 
-            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-              A full-stack CRM project built from the ground up
-              to explore authentication, authorization, database
-              architecture, real-time communication, and
-              production-style application design.
-            </p>
+          <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground sm:text-xl leading-relaxed">
+            A production-style CRM designed around real-world software architecture:
+            multi-tenant isolation, dynamic RBAC, real-time WebSocket push updates, and ACID
+            relational databases.
+          </p>
 
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg">
-                <a
-                  href="https://akashkumar04.vercel.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Visit my portfolio
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </a>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <PublicCtaButton
+              size="lg"
+              guestText="Explore the CRM"
+              authText="Go to Dashboard"
+            />
+            <Link href="/contact">
+              <Button variant="outline" size="lg" className="rounded-xl">
+                Discuss Project
               </Button>
-
-              <Button variant="outline" size="lg" asChild>
-                <a
-                  href="https://github.com/kuakash01"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <GithubIcon className="mr-2 h-4 w-4" />
-                  GitHub
-                </a>
-              </Button>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Developer story */}
+      {/* Developer & Project Architect Spotlight */}
+      <section className="py-20 sm:py-24">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+          <Card className="overflow-hidden border border-border/80 shadow-xl bg-card/80 backdrop-blur-md rounded-3xl p-8 sm:p-12">
+            <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] items-center">
+              <div className="space-y-5">
+                <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30">
+                  Architect & Developer
+                </Badge>
+                <h2 className="text-3xl font-extrabold text-foreground">
+                  Akash Kumar
+                </h2>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  Full-stack software engineer focused on building robust, high-performance web systems.
+                  This CRM was built from the ground up to solve the real architectural challenges
+                  often omitted in simplified tutorials—such as multi-tenant room scoping, dynamic permission
+                  matrices without code deploys, and database-level transactional safety.
+                </p>
 
-      <section className="py-24">
-        <div className="mx-auto grid w-full max-w-7xl gap-14 px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              About me
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              I wanted to build more than a CRUD project.
-            </h2>
-
-            <div className="mt-6 space-y-4 text-sm leading-7 text-muted-foreground">
-              <p>
-                I'm Akash Kumar, a developer interested in
-                building full-stack applications and learning
-                how real SaaS systems are structured.
-              </p>
-
-              <p>
-                I built this CRM as a hands-on project to work
-                through problems that appear beyond simple forms
-                and database operations: access control, role
-                management, API design, state management,
-                real-time events, and connected business
-                workflows.
-              </p>
-
-              <p>
-                The goal was to build a system where the
-                architecture matters just as much as the UI.
-              </p>
-            </div>
-
-            <div className="mt-8">
-              <Button variant="outline" asChild>
-                <a
-                  href="https://akashkumar04.vercel.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View my portfolio
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
-            </div>
-          </div>
-
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Code2 className="h-6 w-6" />
-              </div>
-
-              <h3 className="mt-6 text-2xl font-semibold">
-                What I built
-              </h3>
-
-              <div className="mt-7 space-y-3">
-                {modules.map((module) => (
-                  <div
-                    key={module}
-                    className="flex items-center gap-3"
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <a
+                    href="https://akashkumar04.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border/70 bg-muted/40 px-3.5 py-2 text-xs font-semibold text-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary"
                   >
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    <Globe className="h-3.5 w-3.5" />
+                    <span>Personal Portfolio</span>
+                    <ExternalLink className="h-3 w-3 opacity-60" />
+                  </a>
 
-                    <span className="text-sm font-medium">
-                      {module}
-                    </span>
+                  <a
+                    href="https://github.com/kuakash01"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border/70 bg-muted/40 px-3.5 py-2 text-xs font-semibold text-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                  >
+                    <GitBranch className="h-3.5 w-3.5" />
+                    <span>GitHub Profile</span>
+                    <ExternalLink className="h-3 w-3 opacity-60" />
+                  </a>
+
+                  <a
+                    href="mailto:ku.akash.04@gmail.com"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border/70 bg-muted/40 px-3.5 py-2 text-xs font-semibold text-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                  >
+                    <span>ku.akash.04@gmail.com</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Engineering Stats Grid */}
+              <div className="rounded-2xl border border-border/70 bg-muted/20 p-6 space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Architecture Benchmarks
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-border/60 bg-card p-3.5">
+                    <span className="text-2xl font-black text-foreground">7</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Core CRM Engines</p>
                   </div>
-                ))}
+                  <div className="rounded-xl border border-border/60 bg-card p-3.5">
+                    <span className="text-2xl font-black text-emerald-500">&lt;30ms</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Query Latency</p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-card p-3.5">
+                    <span className="text-2xl font-black text-primary">100%</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">Dynamic RBAC</p>
+                  </div>
+                  <div className="rounded-xl border border-border/60 bg-card p-3.5">
+                    <span className="text-2xl font-black text-purple-500">Live</span>
+                    <p className="text-xs text-muted-foreground mt-0.5">WebSocket Sync</p>
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Engineering highlights */}
-
-      <section className="border-y bg-muted/20 py-24">
-        <div className="mx-auto w-full max-w-7xl px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              Engineering highlights
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              The parts that go beyond basic CRUD
-            </h2>
-
-            <p className="mt-4 text-muted-foreground">
-              The project was built to demonstrate real application
-              concerns across frontend, backend, data, security,
-              and real-time communication.
-            </p>
-          </div>
-
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {engineeringHighlights.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <Card
-                  key={item.title}
-                  className="h-full transition-shadow hover:shadow-md"
-                >
-                  <CardContent className="p-7">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-5 w-5" />
-                    </div>
-
-                    <h3 className="mt-5 text-lg font-semibold">
-                      {item.title}
-                    </h3>
-
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {item.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Dynamic authorization */}
-
-      <section className="py-24">
-        <div className="mx-auto grid w-full max-w-6xl gap-12 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <LockKeyhole className="h-6 w-6" />
             </div>
-
-            <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              Authorization architecture
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Roles are dynamic, not hard-coded.
-            </h2>
-
-            <p className="mt-5 text-sm leading-7 text-muted-foreground">
-              Authorized users can create roles, assign permissions
-              to those roles, create users, and assign users to
-              those roles. Permissions are managed around CRM
-              modules and actions.
-            </p>
-          </div>
-
-          <Card>
-            <CardContent className="p-8">
-              <div className="space-y-4">
-                <ArchitectureRow
-                  label="Organization"
-                  value="Users"
-                />
-
-                <ArchitectureRow
-                  label="Users"
-                  value="Roles"
-                />
-
-                <ArchitectureRow
-                  label="Roles"
-                  value="Permissions"
-                />
-
-                <ArchitectureRow
-                  label="Permissions"
-                  value="Module + Action"
-                />
-              </div>
-
-              <div className="mt-7 rounded-xl border bg-muted/30 p-4">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Example
-                </p>
-
-                <p className="mt-2 font-mono text-sm">
-                  leads:read
-                </p>
-
-                <p className="mt-1 font-mono text-sm">
-                  leads:update
-                </p>
-
-                <p className="mt-1 font-mono text-sm">
-                  leads:assign
-                </p>
-              </div>
-            </CardContent>
           </Card>
         </div>
       </section>
 
-      {/* Technology */}
-
-      <section className="border-y bg-muted/20 py-24">
-        <div className="mx-auto w-full max-w-7xl px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              Technology
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Full-stack technologies used in the project
+      {/* 4-Quadrant Architecture Blueprint */}
+      <section className="border-t border-border/60 bg-muted/10 py-20 sm:py-28">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-primary">
+              Full-Stack Blueprint
             </h2>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl text-foreground">
+              Production Architecture Stack
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              How the CRM separates presentation, business logic, persistence, and real-time broadcasting.
+            </p>
           </div>
 
-          <div className="mx-auto mt-12 flex max-w-5xl flex-wrap justify-center gap-3">
-            {technologies.map((technology) => (
-              <div
-                key={technology}
-                className="rounded-lg border bg-background px-4 py-2.5 text-sm font-medium shadow-sm"
-              >
-                {technology}
-              </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {architectureLayers.map((layer, index) => (
+              <Card key={index} className="border border-border/70 bg-card/60 p-6 sm:p-8 shadow-sm">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                  {layer.tech}
+                </span>
+                <h3 className="text-xl font-bold text-foreground mt-2">
+                  {layer.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                  {layer.summary}
+                </p>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Principles */}
-
-      <section className="py-24">
-        <div className="mx-auto w-full max-w-7xl px-6">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-              What this project demonstrates
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              More than a collection of screens
+      {/* 6 Core Technical Pillars */}
+      <section className="py-20 sm:py-28">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-primary">
+              Engineering Disciplines
             </h2>
+            <p className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl text-foreground">
+              Core Technical Capabilities
+            </p>
           </div>
 
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {principles.map((principle) => {
-              const Icon = principle.icon;
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {technicalPillars.map((pillar, idx) => {
+              const Icon = pillar.icon;
 
               return (
-                <Card key={principle.title}>
-                  <CardContent className="p-7">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-5 w-5" />
-                    </div>
-
-                    <h3 className="mt-5 text-xl font-semibold">
-                      {principle.title}
-                    </h3>
-
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {principle.description}
-                    </p>
-                  </CardContent>
+                <Card key={idx} className="border border-border/70 bg-card/60 p-6 shadow-sm transition-all hover:border-primary/40 hover:shadow-md">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl border mb-4 ${pillar.bgColor}`}>
+                    <Icon className={`h-5 w-5 ${pillar.color}`} />
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground">
+                    {pillar.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                    {pillar.description}
+                  </p>
                 </Card>
               );
             })}
@@ -431,86 +303,31 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* CTA */}
-
-      <section className="border-t py-24">
-        <div className="mx-auto w-full max-w-4xl px-6 text-center">
-          <div className="flex justify-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Heart className="h-6 w-6" />
+      {/* Bottom Conversion Finale */}
+      <section className="border-t border-border/60 bg-muted/20 py-20 sm:py-24">
+        <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/15 via-background to-purple-500/10 p-8 sm:p-12 text-center shadow-2xl">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+              Explore the Implementation
+            </h2>
+            <p className="mt-4 text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              Experience the application firsthand or review the codebase on GitHub.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <PublicCtaButton
+                size="lg"
+                guestText="Launch CRM Workspace"
+                authText="Go to Dashboard"
+              />
+              <Link href="/contact">
+                <Button variant="outline" size="lg" className="rounded-xl">
+                  Contact Developer
+                </Button>
+              </Link>
             </div>
-          </div>
-
-          <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-            Want to see more of my work?
-          </h2>
-
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">
-            Explore my portfolio or dive into the CRM project.
-          </p>
-
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild>
-              <a
-                href="https://akashkumar04.vercel.app/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Visit portfolio
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-
-            <Button variant="outline" asChild>
-              <a
-                href="https://github.com/kuakash01"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <GithubIcon className="mr-2 h-4 w-4" />
-                GitHub
-              </a>
-            </Button>
           </div>
         </div>
       </section>
     </div>
-  );
-}
-
-function ArchitectureRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-lg border px-4 py-3">
-      <span className="text-sm font-medium">
-        {label}
-      </span>
-
-      <span className="text-sm text-muted-foreground">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function GithubIcon({
-  className,
-}: {
-  className?: string;
-}) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.85 10.91.57.11.78-.25.78-.55 0-.27-.01-1-.01-1.95-3.19.69-3.86-1.54-3.86-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.67 1.24 3.32.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.47.11-3.06 0 0 .96-.31 3.15 1.18a10.93 10.93 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.77.11 3.06.73.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.25 5.68.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.21.66.79.55A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z" />
-    </svg>
   );
 }

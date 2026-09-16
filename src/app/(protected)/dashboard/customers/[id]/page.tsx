@@ -53,6 +53,7 @@ import { CustomerStatus, Customer } from "@/features/customers/customer.types";
 
 import AssignmentCard from "@/shared/components/user-assignment/AssigmentCard";
 import Link from "next/dist/client/link";
+import { DetailPageSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 export default function CustomerDetailsPage() {
   const { id } = useParams();
@@ -131,7 +132,7 @@ export default function CustomerDetailsPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading Customer...</div>;
+    return <DetailPageSkeleton />;
   }
 
   if (!customer) {

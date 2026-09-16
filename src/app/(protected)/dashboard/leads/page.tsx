@@ -43,6 +43,7 @@ import DataTablePagination from "@/shared/components/pagination/DataTablePaginat
 
 import { Lead, LeadCounts } from "@/features/leads/leads.types";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 const leadStatuses = [
   "ALL",
@@ -259,7 +260,7 @@ export default function LeadsPage() {
           )}
 
           {loading ? (
-            <div className="flex justify-center py-12">Loading leads...</div>
+            <TableSkeleton rows={pagination.limit} />
           ) : leads.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center">
               <h3 className="font-medium">

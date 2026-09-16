@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { DetailPageSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 type Permission = {
   module_id: number;
@@ -125,7 +126,7 @@ export default function RolePermissionsPage() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <DetailPageSkeleton />;
   }
 
  return (

@@ -57,6 +57,7 @@ import TasksTab from "@/features/tasks/component/TasksTab";
 
 import { useAppSelector } from "@/store/hooks";
 import AssignmentCard from "@/shared/components/user-assignment/AssigmentCard";
+import { DetailPageSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 type LeadStatus =
   | "NEW"
@@ -202,7 +203,7 @@ export default function LeadDetailsPage() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading lead...</div>;
+    return <DetailPageSkeleton />;
   }
 
   if (!lead) {

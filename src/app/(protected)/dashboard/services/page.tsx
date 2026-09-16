@@ -24,6 +24,7 @@ import DataTablePagination from "@/shared/components/pagination/DataTablePaginat
 
 import { getServices } from "@/features/services/services.service";
 import { Service } from "@/features/services/service.types";
+import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 export default function ServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
@@ -138,11 +139,7 @@ export default function ServicesPage() {
       {/* Content */}
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <span className="text-sm text-muted-foreground">
-            Loading services...
-          </span>
-        </div>
+        <TableSkeleton rows={pagination.limit} />
       ) : services.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <h3 className="font-medium">

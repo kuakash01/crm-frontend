@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Zap } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/shared/components/Logo";
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { useAuthSession } from "@/shared/hooks/useAuthSession";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -16,24 +19,14 @@ const navItems = [
 
 export default function HeaderPublic() {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuthSession();
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
         {/* Logo */}
 
-        <Link
-          href="/"
-          className="flex items-center gap-2"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Zap className="h-5 w-5" />
-          </div>
-
-          <span className="text-lg font-bold tracking-tight">
-            CRM
-          </span>
-        </Link>
+        <Logo href="/" />
 
         {/* Navigation */}
 
@@ -69,20 +62,33 @@ export default function HeaderPublic() {
         {/* Actions */}
 
         <div className="flex items-center gap-2">
-          <Link href="/login">
-            <Button
-              variant="ghost"
-              className="hidden sm:inline-flex"
-            >
-              Sign in
-            </Button>
-          </Link>
+          <ThemeToggle />
 
-          <Link href="/register">
-            <Button>
-              Get started
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button className="gap-2 font-medium shadow-xs">
+                <LayoutDashboard className="h-4 w-4" />
+                <span>Dashboard</span>
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button
+                  variant="ghost"
+                  className="hidden sm:inline-flex"
+                >
+                  Sign in
+                </Button>
+              </Link>
+
+              <Link href="/register">
+                <Button>
+                  Get started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

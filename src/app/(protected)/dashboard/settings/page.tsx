@@ -15,7 +15,7 @@ const settingsItems = [
     title: "Organization",
     description: "Manage organization information",
     href: "/dashboard/settings/organization",
-    onProgress: true,
+    onProgress: false,
   },
   {
     title: "Roles & Permissions",
@@ -33,7 +33,7 @@ const settingsItems = [
     title: "Security",
     description: "Password and security settings",
     href: "/dashboard/settings/security",
-    onProgress: true,
+    onProgress: false,
   },
 ];
 

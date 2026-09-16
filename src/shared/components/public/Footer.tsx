@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { ExternalLink, Zap } from "lucide-react";
+import { useAuthSession } from "@/shared/hooks/useAuthSession";
 
 export default function Footer() {
+  const { isAuthenticated } = useAuthSession();
+
   return (
     <footer className="border-t">
       <div className="mx-auto w-full max-w-7xl px-6 py-10">
@@ -102,19 +107,30 @@ export default function Footer() {
                 GitHub
               </a>
 
-              <Link
-                href="/login"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Sign in
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/dashboard"
+                  className="font-medium text-primary transition-colors hover:underline"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Sign in
+                  </Link>
 
-              <Link
-                href="/register"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Get started
-              </Link>
+                  <Link
+                    href="/register"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Get started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
