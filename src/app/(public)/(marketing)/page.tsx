@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PublicCtaButton } from "@/shared/components/public/PublicCtaButton";
 import { HeroDashboardPreview } from "@/shared/components/public/HeroDashboardPreview";
+import { ServerWarmup } from "@/shared/components/public/ServerWarmup";
 
 export const metadata: Metadata = {
   title: "CRM Pro | Modern Sales & Customer Management Platform",
@@ -46,6 +47,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+      <ServerWarmup />
       {/* -------------------------------------------------------------------- */}
       {/* 1. HERO SECTION                                                      */}
       {/* -------------------------------------------------------------------- */}

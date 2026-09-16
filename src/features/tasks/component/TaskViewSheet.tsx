@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { getTaskById } from "@/features/tasks/tasks.service";
 import { TaskDetails } from "@/features/tasks/tasks.types";
@@ -178,13 +179,17 @@ export default function TaskViewSheet({
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex min-h-[400px] items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-
-              <p className="text-sm text-muted-foreground">
-                Loading task...
-              </p>
+          <div className="space-y-6 px-6 py-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28 rounded" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-24 rounded" />
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
+              </div>
             </div>
           </div>
         ) : !task ? (

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import UserForm from "@/features/users/components/UserForm";
 
 import { getUser, updateUser } from "@/features/users/users.service";
+import { FormSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 export default function EditUserPage() {
   const params = useParams();
@@ -36,7 +37,11 @@ export default function EditUserPage() {
   };
 
   if (!user) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full space-y-6">
+        <FormSkeleton />
+      </div>
+    );
   }
 
   return (

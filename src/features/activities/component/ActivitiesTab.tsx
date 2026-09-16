@@ -146,6 +146,7 @@ import { Activity } from "../activities.types";
 
 import { usePagination } from "@/shared/hooks/usePagination";
 import DataTablePagination from "@/shared/components/pagination/DataTablePagination";
+import { TimelineSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 interface ActivitiesTabProps {
   entityType: "LEAD" | "CUSTOMER" | "DEAL";
@@ -208,8 +209,8 @@ export default function ActivitiesTab({
   if (loading) {
     return (
       <Card>
-        <CardContent className="py-12 text-center">
-          Loading activities...
+        <CardContent className="p-6">
+          <TimelineSkeleton items={4} />
         </CardContent>
       </Card>
     );

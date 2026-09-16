@@ -22,6 +22,7 @@ import DealCard from "./DealCard";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, LayoutGrid, Columns } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PipelineSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 const stages = [
   { key: "OPEN", title: "Open" },
@@ -133,12 +134,7 @@ export default function DealsPipeline() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
-        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-        <span>Loading pipeline deals...</span>
-      </div>
-    );
+    return <PipelineSkeleton />;
   }
 
   const groupedDeals = {

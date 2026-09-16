@@ -522,6 +522,7 @@ import {
   getMyProfile,
   updateMyProfile,
 } from "@/features/users/users.service";
+import { ProfileSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 import { changePassword } from "@/features/auth/services/auth.service";
 
@@ -760,9 +761,7 @@ export default function ProfilePage() {
     return (
       <main className="min-h-full bg-background">
         <div className="mx-auto w-full max-w-5xl px-6 py-8">
-          <div className="text-sm text-muted-foreground">
-            Loading profile...
-          </div>
+          <ProfileSkeleton />
         </div>
       </main>
     );

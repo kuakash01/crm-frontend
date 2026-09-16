@@ -15,6 +15,7 @@ import {
   updateMyOrganization,
   type Organization,
 } from "@/features/organizations/organizations.service";
+import { OrganizationSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 const emptyForm = {
   name: "",
@@ -111,11 +112,7 @@ export default function OrganizationPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center">
-        Loading organization details...
-      </div>
-    );
+    return <OrganizationSkeleton />;
   }
 
   if (!organization) {

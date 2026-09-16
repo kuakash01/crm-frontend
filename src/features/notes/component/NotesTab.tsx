@@ -18,6 +18,7 @@ import DataTablePagination from "@/shared/components/pagination/DataTablePaginat
 import { Badge } from "@/components/ui/badge";
 import { NotebookPen, Clock3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ListSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 interface NotesTabProps {
   entityType: "LEAD" | "CUSTOMER" | "DEAL";
@@ -94,8 +95,11 @@ export default function NotesTab({ entityType, entityId }: NotesTabProps) {
   if (loading) {
     return (
       <Card>
-        <CardContent className="py-10 text-center">
-          Loading notes...
+        <CardHeader>
+          <CardTitle>Notes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ListSkeleton items={3} />
         </CardContent>
       </Card>
     );

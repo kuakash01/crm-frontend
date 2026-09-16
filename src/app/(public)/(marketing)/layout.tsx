@@ -4,6 +4,7 @@
 // import Footer from "@/shared/components/Footer";
 import Header from "@/shared/components/public/Header";
 import Footer from "@/shared/components/public/Footer";
+import { ServerWarmup } from "@/shared/components/public/ServerWarmup";
 
 export default function MarketingLayout({
   children,
@@ -12,6 +13,7 @@ export default function MarketingLayout({
 }) {
   return (
     <main>
+      <ServerWarmup />
       <Header />
       {children}
       <Footer />

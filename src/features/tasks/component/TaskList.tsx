@@ -47,6 +47,7 @@ import {
 } from "@/features/tasks/tasks.types";
 
 import { usePermission } from "@/shared/hooks/usePermissions";
+import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 type TaskStatus = "ALL" | "PENDING" | "COMPLETED";
 
@@ -257,13 +258,9 @@ export default function TaskList({
    */
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex justify-center py-12">
-          <span className="text-sm text-muted-foreground">
-            Loading tasks...
-          </span>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <TableSkeleton rows={limit || 6} />
+      </div>
     );
   }
 

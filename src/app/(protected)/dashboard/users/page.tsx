@@ -54,21 +54,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { UsersPageSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const loadUsers = async () => {
     try {
+      setLoading(true);
       const data = await getUsers();
-
       setUsers(data);
     } catch {
       toast.error("Failed to load users");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -116,8 +118,12 @@ export default function UsersPage() {
   const filteredUsers = users.filter(
     (user) =>
       user.fullname.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase()),
+      user.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return <UsersPageSkeleton />;
+  }
 
   return (
     <>

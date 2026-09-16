@@ -10,19 +10,24 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ListSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 import { getCustomerDeals } from "@/features/customers/customers.service";
 
 export default function CustomerDeals({ customerId }: { customerId: number }) {
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDeals = async () => {
       try {
+        setLoading(true);
         const data = await getCustomerDeals(customerId);
         setDeals(data);
       } catch {
         toast.error("Failed to load deals");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -42,7 +47,9 @@ export default function CustomerDeals({ customerId }: { customerId: number }) {
         </Link>
       </div>
 
-      {deals.length === 0 ? (
+      {loading ? (
+        <ListSkeleton items={3} />
+      ) : deals.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             No deals found.

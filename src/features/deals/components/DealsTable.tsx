@@ -402,6 +402,7 @@ import {
 import { getDeals, assignDeals } from "@/features/deals/deals.service";
 
 import { Deal } from "../deals.types";
+import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 const stages = [
   "ALL",
@@ -652,10 +653,12 @@ export default function DealsTable() {
       </div>
 
       {/* -------------------------------- */}
-      {/* Empty state                      */}
+      {/* Table Content                    */}
       {/* -------------------------------- */}
 
-      {deals.length === 0 ? (
+      {loading ? (
+        <TableSkeleton rows={pagination.limit || 8} />
+      ) : deals.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <h3 className="font-medium">
             {counts.ALL === 0 ? "No deals yet" : "No matching deals"}
@@ -675,40 +678,8 @@ export default function DealsTable() {
         </div>
       ) : (
         <>
-          {/* -------------------------------- */}
-          {/* Table                            */}
-          {/* -------------------------------- */}
-
-          {/* Table */}
-
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="text-sm text-muted-foreground">
-                Loading deals...
-              </div>
-            </div>
-          ) : deals.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center">
-              <h3 className="font-medium">
-                {counts.ALL === 0 ? "No deals yet" : "No matching deals"}
-              </h3>
-
-              <p className="text-sm text-muted-foreground">
-                {counts.ALL === 0
-                  ? "Create your first deal to start tracking sales opportunities."
-                  : "Try changing your search or selecting a different stage."}
-              </p>
-
-              {counts.ALL === 0 && can("deals:create") && (
-                <Link href="/dashboard/deals/create">
-                  <Button>Create Deal</Button>
-                </Link>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto rounded-lg border">
-                <Table className="w-full">
+          <div className="overflow-x-auto rounded-lg border">
+            <Table className="w-full">
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       {/* Checkbox */}
@@ -899,8 +870,6 @@ export default function DealsTable() {
               />
             </>
           )}
-        </>
-      )}
-    </div>
-  );
-}
+        </div>
+      );
+    }

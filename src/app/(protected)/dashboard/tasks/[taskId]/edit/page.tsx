@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 import TaskForm from "@/features/tasks/component/TaskForm";
 import { getTaskById } from "@/features/tasks/tasks.service";
-import { LoadingSpinner } from "@/shared/components/loading/LoadingSpinner";
+import { FormSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
 
 import type { TaskDetails } from "@/features/tasks/tasks.types";
 
@@ -49,11 +49,7 @@ export default function EditTaskPage() {
   }, [taskId, router]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <LoadingSpinner text="Loading task..." />
-      </div>
-    );
+    return <FormSkeleton />;
   }
 
   if (!task) {
