@@ -5,6 +5,7 @@ export type User = {
   role: string;
   role_id: number;
   is_active: boolean;
+  is_demo?: boolean;
 };
 
 export type AssignableUser = {

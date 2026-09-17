@@ -367,7 +367,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { toast } from "sonner";
-import { Eye, MoreHorizontal, UserRoundPlus } from "lucide-react";
+import { Eye, MoreHorizontal, UserRoundPlus, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/csvExport";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -535,15 +536,39 @@ export default function DealsTable() {
   /* ----------------------------- */
 
   const handleBulkMode = () => {
-    setBulkMode((current) => {
-      const next = !current;
+    setBulkMode((prev) => !prev);
+    setSelectedDeals([]);
+  };
 
-      if (!next) {
-        setSelectedDeals([]);
-      }
-
-      return next;
-    });
+  const handleExportCsv = () => {
+    if (!deals.length) {
+      toast.error("No deals to export");
+      return;
+    }
+    const headers = [
+      "ID",
+      "Title",
+      "Customer",
+      "Service",
+      "Stage",
+      "Price",
+      "Expected Close Date",
+      "Assigned To",
+      "Created Date",
+    ];
+    const rows = deals.map((d) => [
+      d.id,
+      d.title,
+      d.customer_name || d.customer_id,
+      d.service_name || d.service_id,
+      d.stage,
+      d.price,
+      d.expected_close_date ? new Date(d.expected_close_date).toLocaleDateString() : "",
+      d.assigned_to_name || "Unassigned",
+      d.created_at ? new Date(d.created_at).toLocaleDateString() : "",
+    ]);
+    exportToCsv("deals_export", headers, rows);
+    toast.success(`Exported ${deals.length} deals`);
   };
 
   /* ----------------------------- */
@@ -646,6 +671,11 @@ export default function DealsTable() {
             {bulkMode ? "Cancel" : "Select Deals"}
           </Button>
         )}
+
+        <Button variant="outline" onClick={handleExportCsv} className="gap-2">
+          <Download className="h-4 w-4" />
+          <span>Export CSV</span>
+        </Button>
 
         <Button variant="outline" onClick={fetchDeals}>
           Refresh

@@ -112,14 +112,15 @@ export const changePassword = async (data: {
   return response.data;
 };
 
-// export async function verifyLoginOtp(data: {
-//   userId: number;
-//   otp: string;
-// }) {
-//   const response = await axios.post(
-//     "/auth/verify-login-otp",
-//     data,
-//   );
+export const sendLoginOtp = async (email: string) => {
+  const response = await axios.post("/auth/otp/send", { email });
+  return response.data;
+};
 
-//   return response.data.data;
-// }
+export const verifyLoginOtp = async (data: {
+  email: string;
+  otp: string;
+}) => {
+  const response = await axios.post("/auth/otp/verify", data);
+  return response.data;
+};

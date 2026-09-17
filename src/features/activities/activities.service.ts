@@ -19,3 +19,18 @@ export const getActivities = async (
   );
   return response.data.data;
 };
+
+export const logActivity = async (
+  entityType: string,
+  entityId: number,
+  data: {
+    activityType: string;
+    description: string;
+  }
+) => {
+  const response = await axios.post(
+    `/activities/${entityType}/${entityId}`,
+    data
+  );
+  return response.data.data;
+};

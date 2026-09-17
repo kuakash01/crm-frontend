@@ -31,9 +31,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { MoreHorizontal, Eye, UserRoundPlus } from "lucide-react";
+import { MoreHorizontal, Eye, UserRoundPlus, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/csvExport";
 
 import QuickAssignment from "@/shared/components/user-assignment/QuickAssignment";
+import InboundApiDialog from "@/features/organizations/components/InboundApiDialog";
 
 // hooks
 import { usePermission } from "@/shared/hooks/usePermissions";
@@ -166,6 +168,39 @@ export default function LeadsPage() {
     }
   };
 
+  const handleExportCsv = () => {
+    if (!leads.length) {
+      toast.error("No leads to export");
+      return;
+    }
+    const headers = [
+      "ID",
+      "First Name",
+      "Last Name",
+      "Email",
+      "Phone",
+      "Company",
+      "Status",
+      "Source",
+      "Assigned To",
+      "Created Date",
+    ];
+    const rows = leads.map((lead) => [
+      lead.id,
+      lead.fname,
+      lead.lname,
+      lead.email,
+      lead.phone1,
+      lead.company || "",
+      lead.status,
+      lead.source,
+      lead.assigned_to_name || "Unassigned",
+      lead.created_at ? new Date(lead.created_at).toLocaleDateString() : "",
+    ]);
+    exportToCsv("leads_export", headers, rows);
+    toast.success(`Exported ${leads.length} leads`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -176,6 +211,13 @@ export default function LeadsPage() {
         </div>
 
         <div className="flex gap-2">
+          {can("organizations:update") && <InboundApiDialog />}
+
+          <Button variant="outline" onClick={handleExportCsv} className="gap-2">
+            <Download className="h-4 w-4" />
+            <span>Export CSV</span>
+          </Button>
+
           {can("leads:create") && (
             <Link href="/dashboard/leads/create">
               <Button>Create Lead</Button>

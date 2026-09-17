@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { MoreHorizontal, Search } from "lucide-react";
+import { MoreHorizontal, Search, Download } from "lucide-react";
 import { toast } from "sonner";
+import { exportToCsv } from "@/lib/csvExport";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -253,6 +254,31 @@ export default function TaskList({
     }
   };
 
+  const handleExportCsv = () => {
+    if (!data?.tasks.length) {
+      toast.error("No tasks to export");
+      return;
+    }
+    const headers = [
+      "ID",
+      "Title",
+      "Assigned To",
+      "Due Date",
+      "Priority",
+      "Status",
+    ];
+    const rows = data.tasks.map((task) => [
+      task.id,
+      task.title,
+      task.assigned_to_name || "Unassigned",
+      task.due_date ? new Date(task.due_date).toLocaleDateString() : "",
+      task.priority,
+      task.status,
+    ]);
+    exportToCsv("tasks_export", headers, rows);
+    toast.success(`Exported ${data.tasks.length} tasks`);
+  };
+
   /*
    * Loading
    */
@@ -289,6 +315,7 @@ export default function TaskList({
             showSearch={showSearch}
             showEntityFilter={!isModuleList}
             onRefresh={fetchTasks}
+            onExportCsv={handleExportCsv}
           />
         )}
 
@@ -343,6 +370,7 @@ export default function TaskList({
           showSearch={showSearch}
           showEntityFilter={!isModuleList}
           onRefresh={fetchTasks}
+          onExportCsv={handleExportCsv}
         />
       )}
 
@@ -642,6 +670,7 @@ interface TaskFiltersProps {
   showEntityFilter: boolean;
 
   onRefresh: () => void;
+  onExportCsv?: () => void;
 }
 
 function TaskFilters({
@@ -656,6 +685,7 @@ function TaskFilters({
   showSearch,
   showEntityFilter,
   onRefresh,
+  onExportCsv,
 }: TaskFiltersProps) {
   return (
     <div className="flex flex-col gap-3 xl:flex-row">
@@ -789,6 +819,17 @@ function TaskFilters({
           </SelectItem>
         </SelectContent>
       </Select>
+
+      {onExportCsv && (
+        <Button
+          variant="outline"
+          onClick={onExportCsv}
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          <span>Export CSV</span>
+        </Button>
+      )}
 
       <Button
         variant="outline"

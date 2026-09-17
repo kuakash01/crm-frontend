@@ -61,6 +61,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
 
   const loadUsers = async () => {
     try {
@@ -89,13 +90,14 @@ export default function UsersPage() {
       setSelectedUser(null);
 
       loadUsers();
-    } catch {
-      toast.error("Failed to delete user");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete user");
     }
   };
 
   const handleStatusChange = async (userId: number, isActive: boolean) => {
     try {
+      setUpdatingStatusId(userId);
       await changeUserStatus(userId, isActive);
 
       setUsers((prev) =>
@@ -109,9 +111,13 @@ export default function UsersPage() {
         ),
       );
 
-      toast.success("User status updated");
-    } catch {
-      toast.error("Failed to update status");
+      toast.success(
+        `User ${isActive ? "activated" : "deactivated"} successfully`
+      );
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update status");
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -217,11 +223,15 @@ export default function UsersPage() {
                     <TableCell>{user.email}</TableCell>
 
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <Badge variant="outline">{user.role}</Badge>
 
                         {user.role.toLowerCase() === "admin" && (
                           <Badge>Owner</Badge>
+                        )}
+
+                        {user.is_demo && (
+                          <Badge variant="secondary" className="text-xs">Demo</Badge>
                         )}
                       </div>
                     </TableCell>
@@ -233,6 +243,7 @@ export default function UsersPage() {
                         <div className="flex items-center gap-3">
                           <Switch
                             checked={user.is_active}
+                            disabled={updatingStatusId === user.id || Boolean(user.is_demo)}
                             onCheckedChange={(checked) =>
                               handleStatusChange(user.id, checked)
                             }
@@ -240,6 +251,7 @@ export default function UsersPage() {
 
                           <span className="text-sm">
                             {user.is_active ? "Active" : "Inactive"}
+                            {user.is_demo ? " (Demo)" : ""}
                           </span>
                         </div>
                       )}
@@ -264,9 +276,10 @@ export default function UsersPage() {
 
                               <DropdownMenuItem
                                 className="text-red-500"
+                                disabled={Boolean(user.is_demo)}
                                 onClick={() => setSelectedUser(user)}
                               >
-                                Delete
+                                {user.is_demo ? "Delete (Protected)" : "Delete"}
                               </DropdownMenuItem>
                             </>
                           )}

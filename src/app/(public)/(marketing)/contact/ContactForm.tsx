@@ -23,18 +23,69 @@ export default function ContactForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const rawName = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+    const rawPhone = String(formData.get("phone") || "").trim();
+    const company = String(formData.get("company") || "").trim();
+    const topic = String(formData.get("topic") || "").trim();
+    const rawMessage = String(formData.get("message") || "").trim();
+
+    // Sanitize phone to digits and optional leading +
+    const phoneClean = rawPhone.replace(/[^\d+]/g, "");
+    if (!phoneClean || phoneClean.replace(/\D/g, "").length < 7) {
+      toast.error("Please enter a valid contact phone number (minimum 7 digits).");
+      return;
+    }
+
+    // Split name into letters-only fname and lname (CRM DB constraint)
+    const nameParts = rawName.split(/\s+/);
+    const fnameClean = (nameParts[0] || "Inquiry").replace(/[^A-Za-z]/g, "") || "Guest";
+    const lnameClean = (nameParts.slice(1).join("") || "Contact").replace(/[^A-Za-z]/g, "") || "Lead";
+
+    const combinedMessage = [
+      topic ? `[Topic: ${topic}]` : null,
+      rawMessage,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     try {
       setLoading(true);
 
-      // Simulates real-time dispatch (hook up to email service / webhook)
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const endpoint = "/api/contact";
+      const payload = {
+        name: rawName,
+        email,
+        phone: phoneClean,
+        company: company || undefined,
+        topic: topic || undefined,
+        message: rawMessage,
+        website_url: String(formData.get("website_url") || "").trim() || undefined,
+      };
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to submit inquiry. Please try again.");
+      }
 
       setSubmitted(true);
-      toast.success("Message dispatched successfully! Akash will get back to you shortly.");
-      event.currentTarget.reset();
-    } catch {
-      toast.error("Failed to send message. Please try emailing directly.");
+      toast.success("Message dispatched! Your inquiry was received by our team.");
+      form.reset();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to dispatch message.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -59,7 +110,7 @@ export default function ContactForm() {
         </CardTitle>
 
         <CardDescription className="text-sm text-muted-foreground leading-relaxed">
-          Fill out the specifications below. Messages are routed directly to Akash Kumar for prompt review and technical discussion.
+          Fill out the specifications below. Messages are routed directly to Akash Kumar and queued in the CRM for prompt review.
         </CardDescription>
       </CardHeader>
 
@@ -71,7 +122,7 @@ export default function ContactForm() {
             </div>
             <h3 className="text-lg font-bold text-foreground">Message Dispatched!</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Thank you for reaching out. Your inquiry has been queued and Akash will respond to your email within 24 hours.
+              Thank you for reaching out. Your inquiry has been created in the CRM system and Akash will respond to your email within 24 hours.
             </p>
             <Button
               variant="outline"
@@ -84,6 +135,18 @@ export default function ContactForm() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Anti-Bot Honeypot Field (Invisible to humans, catches automated form-filler bots) */}
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="website_url">Leave this field blank</label>
+              <input
+                id="website_url"
+                name="website_url"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -113,16 +176,32 @@ export default function ContactForm() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="company" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Organization / Company <span className="text-muted-foreground/60 font-normal">(Optional)</span>
-              </Label>
-              <Input
-                id="company"
-                name="company"
-                placeholder="Company, project, or affiliation"
-                className="rounded-xl border-border/80 bg-background/60 h-11 focus-visible:ring-primary/20"
-              />
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Contact Phone <span className="text-primary">*</span>
+                </Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="e.g. +1 555 123 4567"
+                  required
+                  className="rounded-xl border-border/80 bg-background/60 h-11 focus-visible:ring-primary/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="company" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Organization / Company <span className="text-muted-foreground/60 font-normal">(Optional)</span>
+                </Label>
+                <Input
+                  id="company"
+                  name="company"
+                  placeholder="Company, project, or affiliation"
+                  className="rounded-xl border-border/80 bg-background/60 h-11 focus-visible:ring-primary/20"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -176,7 +255,7 @@ export default function ContactForm() {
         <div className="mt-6 flex items-center gap-2 rounded-xl border border-border/60 bg-muted/20 p-3 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
           <span>
-            Spam-protected. Direct routing. Emails are never shared or used for marketing lists.
+            Spam-protected. Direct routing into CRM pipeline with instant notifications.
           </span>
         </div>
       </CardContent>

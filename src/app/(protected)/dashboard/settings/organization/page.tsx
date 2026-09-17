@@ -16,6 +16,7 @@ import {
   type Organization,
 } from "@/features/organizations/organizations.service";
 import { OrganizationSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
+import InboundApiSection from "@/features/organizations/components/InboundApiSection";
 
 const emptyForm = {
   name: "",
@@ -318,6 +319,17 @@ export default function OrganizationPage() {
           )}
         </CardContent>
       </Card>
+
+      {canUpdate && (
+        <InboundApiSection
+          inboundKey={organization.inboundLeadKey ?? ""}
+          onKeyRegenerated={(newKey) =>
+            setOrganization((prev) =>
+              prev ? { ...prev, inboundLeadKey: newKey } : prev
+            )
+          }
+        />
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="border-0 shadow-lg">

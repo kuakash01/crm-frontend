@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import LoginForm from "@/features/auth/components/LoginForm";
 import {
   ArrowLeft,
@@ -240,7 +241,9 @@ export default function LoginPage() {
 
           {/* Form */}
           <div className="my-auto w-full max-w-md mx-auto py-2">
-            <LoginForm />
+            <Suspense fallback={<div className="h-96 flex items-center justify-center text-xs text-muted-foreground">Loading workspace login...</div>}>
+              <LoginForm />
+            </Suspense>
           </div>
 
           {/* Mobile Footer */}

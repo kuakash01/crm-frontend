@@ -17,10 +17,11 @@ export interface Organization {
   createdAt: string;
   updatedAt: string;
   teamMembers: number;
+  inboundLeadKey?: string;
 }
 
 export type UpdateOrganizationPayload = Partial<
-  Omit<Organization, "id" | "createdAt" | "updatedAt" | "teamMembers" | "logo">
+  Omit<Organization, "id" | "createdAt" | "updatedAt" | "teamMembers" | "logo" | "inboundLeadKey">
 > & {
   logo?: string | null;
 };
@@ -34,5 +35,10 @@ export const updateMyOrganization = async (
   data: UpdateOrganizationPayload
 ): Promise<Organization> => {
   const response = await axios.patch("/organizations/me", data);
+  return response.data.data;
+};
+
+export const regenerateInboundKey = async (): Promise<{ inboundLeadKey: string }> => {
+  const response = await axios.post("/organizations/regenerate-inbound-key");
   return response.data.data;
 };

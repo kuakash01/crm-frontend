@@ -42,7 +42,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, UserRoundPlus } from "lucide-react";
+import { MoreHorizontal, Eye, UserRoundPlus, Download } from "lucide-react";
+import { exportToCsv } from "@/lib/csvExport";
 
 import QuickAssignment from "@/shared/components/user-assignment/QuickAssignment";
 import { TableSkeleton } from "@/shared/components/skeletons/SkeletonLoaders";
@@ -158,6 +159,39 @@ export default function CustomersPage() {
     router.replace(`${pathname}?${params.toString()}`);
   };
 
+  const handleExportCsv = () => {
+    if (!customers.length) {
+      toast.error("No customers to export");
+      return;
+    }
+    const headers = [
+      "ID",
+      "First Name",
+      "Last Name",
+      "Email",
+      "Phone",
+      "Company",
+      "Status",
+      "Origin",
+      "Assigned To",
+      "Created Date",
+    ];
+    const rows = customers.map((c) => [
+      c.id,
+      c.fname,
+      c.lname,
+      c.email,
+      c.phone1,
+      c.company || "",
+      c.status,
+      c.created_from || "MANUAL",
+      c.assigned_to_name || "Unassigned",
+      c.created_at ? new Date(c.created_at).toLocaleDateString() : "",
+    ]);
+    exportToCsv("customers_export", headers, rows);
+    toast.success(`Exported ${customers.length} customers`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -168,6 +202,11 @@ export default function CustomersPage() {
         </div>
 
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportCsv} className="gap-2">
+            <Download className="h-4 w-4" />
+            <span>Export CSV</span>
+          </Button>
+
           {can("customers:create") && (
             <Link href="/dashboard/customers/create">
               <Button>Create Customer</Button>
